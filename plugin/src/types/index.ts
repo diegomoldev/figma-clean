@@ -37,7 +37,8 @@ export type CommandType =
   | 'set-selection'
   | 'create-image'
   | 'create-video'
-  | 'export-image';
+  | 'export-image'
+  | 'batch-commands';
 
 export interface Command {
   id: string;

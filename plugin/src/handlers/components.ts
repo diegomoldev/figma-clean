@@ -1,10 +1,12 @@
 import { Command, CommandResponse } from '../types';
 
+import { getComponentByKey } from './nodes/helpers';
+
 // 1. sync-component: Create or update component
 export async function handleSyncComponent(msg: Command): Promise<CommandResponse> {
   try {
     const { id, name, sourceNodeId, ...props } = msg.payload;
-    let component: ComponentNode;
+    let component: ComponentNode | null = null;
 
     if (id) {
       const node = figma.getNodeById(id);
@@ -80,7 +82,7 @@ export async function handleSyncInstance(msg: Command): Promise<CommandResponse>
       const found = figma.currentPage.findOne((n) => n.type === 'COMPONENT' && n.name === componentName);
       if (found) component = found as ComponentNode;
     } else if (componentKey) {
-      component = figma.getComponentByKey(componentKey);
+      component = getComponentByKey(componentKey);
     }
 
     if (!component) {
@@ -134,8 +136,8 @@ export async function handleReadComponents(msg: Command): Promise<CommandRespons
       y: comp.y,
       width: comp.width,
       height: comp.height,
-      fills: [...comp.fills],
-      strokes: [...comp.strokes],
+      fills: [...(comp.fills as Paint[])],
+      strokes: [...(comp.strokes as Paint[])],
       cornerRadius: comp.cornerRadius,
       layoutMode: comp.layoutMode
     }));

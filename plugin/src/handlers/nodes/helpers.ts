@@ -1,3 +1,13 @@
+export function getComponentByKey(key: string): ComponentNode | null {
+  const allComponents = figma.root.findAll(node => node.type === "COMPONENT") as ComponentNode[];
+  for (const component of allComponents) {
+    if (component.key === key) {
+      return component;
+    }
+  }
+  return null;
+}
+
 // Helper function to load all fonts used in a text node
 export async function loadTextFonts(textNode: TextNode): Promise<void> {
   const fontNames = textNode.getRangeAllFontNames(0, textNode.characters.length);
@@ -9,7 +19,7 @@ export function applyCommonProperties(node: SceneNode, props: any): void {
   if (props.name !== undefined) node.name = props.name;
   if (props.visible !== undefined) node.visible = props.visible;
   if (props.locked !== undefined) node.locked = props.locked;
-  if (props.opacity !== undefined) node.opacity = props.opacity;
+  if ('opacity' in node && props.opacity !== undefined) node.opacity = props.opacity;
 
   if ('x' in node && props.x !== undefined) (node as FrameNode | RectangleNode | TextNode | EllipseNode).x = props.x;
   if ('y' in node && props.y !== undefined) (node as FrameNode | RectangleNode | TextNode | EllipseNode).y = props.y;
@@ -166,14 +176,42 @@ export function serializeNode(node: SceneNode, depth: number, maxDepth: number):
   if ('height' in node) base.height = (node as FrameNode).height;
   if ('opacity' in node) base.opacity = (node as BlendMixin).opacity;
 
-  if ('fills' in node) base.fills = [...(node as GeometryMixin).fills];
-  if ('strokes' in node) base.strokes = [...(node as GeometryMixin).strokes];
-  if ('strokeWeight' in node) base.strokeWeight = (node as GeometryMixin).strokeWeight;
-  if ('effects' in node) base.effects = [...(node as BlendMixin).effects];
+  if ('fills' in node) {
+    if (node.fills as any === figma.mixed) {
+      base.fills = 'mixed';
+    } else {
+      base.fills = [...(node.fills as Paint[])];
+    }
+  }
+  if ('strokes' in node) {
+    if (node.strokes as any === figma.mixed) {
+      base.strokes = 'mixed';
+    } else {
+      base.strokes = [...(node.strokes as Paint[])];
+    }
+  }
+  if ('strokeWeight' in node) {
+    if (node.strokeWeight as any === figma.mixed) {
+      base.strokeWeight = 'mixed';
+    } else {
+      base.strokeWeight = (node as GeometryMixin).strokeWeight;
+    }
+  }
+  if ('effects' in node) {
+    if (node.effects as any === figma.mixed) {
+      base.effects = 'mixed';
+    } else {
+      base.effects = [...(node.effects as Effect[])];
+    }
+  }
 
   if (node.type === 'FRAME') {
     const frame = node as FrameNode;
-    base.cornerRadius = frame.cornerRadius;
+    if (frame.cornerRadius as any === figma.mixed) {
+      base.cornerRadius = 'mixed';
+    } else {
+      base.cornerRadius = frame.cornerRadius;
+    }
     base.clipsContent = frame.clipsContent;
     base.layoutMode = frame.layoutMode;
     if (frame.layoutMode !== 'NONE') {
@@ -191,7 +229,11 @@ export function serializeNode(node: SceneNode, depth: number, maxDepth: number):
 
   if (node.type === 'RECTANGLE') {
     const rect = node as RectangleNode;
-    base.cornerRadius = rect.cornerRadius;
+    if (rect.cornerRadius as any === figma.mixed) {
+      base.cornerRadius = 'mixed';
+    } else {
+      base.cornerRadius = rect.cornerRadius;
+    }
     base.topLeftRadius = rect.topLeftRadius;
     base.topRightRadius = rect.topRightRadius;
     base.bottomLeftRadius = rect.bottomLeftRadius;
@@ -201,12 +243,36 @@ export function serializeNode(node: SceneNode, depth: number, maxDepth: number):
   if (node.type === 'TEXT') {
     const text = node as TextNode;
     base.characters = text.characters;
-    base.fontSize = text.fontSize;
-    base.fontName = text.fontName;
-    base.textAlignHorizontal = text.textAlignHorizontal;
-    base.textAlignVertical = text.textAlignVertical;
-    base.lineHeight = text.lineHeight;
-    base.letterSpacing = text.letterSpacing;
+    if (text.fontSize as any === figma.mixed) {
+      base.fontSize = 'mixed';
+    } else {
+      base.fontSize = text.fontSize;
+    }
+    if (text.fontName as any === figma.mixed) {
+      base.fontName = 'mixed';
+    } else {
+      base.fontName = text.fontName;
+    }
+    if (text.textAlignHorizontal as any === figma.mixed) {
+      base.textAlignHorizontal = 'mixed';
+    } else {
+      base.textAlignHorizontal = text.textAlignHorizontal;
+    }
+    if (text.textAlignVertical as any === figma.mixed) {
+      base.textAlignVertical = 'mixed';
+    } else {
+      base.textAlignVertical = text.textAlignVertical;
+    }
+    if (text.lineHeight as any === figma.mixed) {
+      base.lineHeight = 'mixed';
+    } else {
+      base.lineHeight = text.lineHeight;
+    }
+    if (text.letterSpacing as any === figma.mixed) {
+      base.letterSpacing = 'mixed';
+    } else {
+      base.letterSpacing = text.letterSpacing;
+    }
   }
 
   if ('children' in node && depth < maxDepth) {

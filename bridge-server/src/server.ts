@@ -47,6 +47,42 @@ wss.on('connection', (ws: WebSocket) => {
   });
 });
 
+app.post('/api/batch-commands', async (req, res) => {
+  const commands = req.body.commands;
+
+  console.log(`[HTTP] Received batch-commands command`);
+
+  if (!pluginConnection || pluginConnection.readyState !== WebSocket.OPEN) {
+    console.error('[HTTP] Plugin not connected');
+    return res.status(503).json({
+      success: false,
+      error: 'Figma plugin not connected',
+    });
+  }
+
+  const command: Command = {
+    id: generateCommandId(),
+    type: 'batch-commands',
+    payload: { commands },
+  };
+
+  try {
+    pluginConnection.send(JSON.stringify(command));
+    console.log(`[HTTP] Sent command ${command.id} to plugin`);
+
+    const response = await queue.addCommand(command);
+    console.log(`[HTTP] Command ${command.id} completed successfully`);
+
+    res.json(response);
+  } catch (error) {
+    console.error(`[HTTP] Command ${command.id} failed:`, error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
 app.post('/api/:commandType', async (req, res) => {
   const commandType = req.params.commandType;
   const payload = req.body;

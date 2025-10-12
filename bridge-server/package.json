@@ -10,15 +10,18 @@
     "watch": "tsc --watch"
   },
   "dependencies": {
-    "ws": "^8.18.0",
+    "cors": "^2.8.5",
     "express": "^4.21.2",
-    "cors": "^2.8.5"
+    "ws": "^8.18.0"
   },
   "devDependencies": {
+    "@types/color": "^4.2.0",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
     "@types/node": "^20.17.10",
     "@types/ws": "^8.5.13",
-    "@types/express": "^5.0.0",
-    "@types/cors": "^2.8.17",
+    "color": "^5.0.2",
+    "ts-node": "^10.9.2",
     "typescript": "^5.3.0"
   }
 }
