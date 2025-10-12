@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Figma Bridge</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 12px;
+      background: #1e1e1e;
+      color: #e6e6e6;
+      padding: 16px;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .status {
+      padding: 12px;
+      background: #2d2d2d;
+      border-radius: 6px;
+      border-left: 3px solid #666;
+    }
+    .status.connected {
+      border-left-color: #4caf50;
+    }
+    .status.disconnected {
+      border-left-color: #f44336;
+    }
+    .status.connecting {
+      border-left-color: #ff9800;
+    }
+    .status-label {
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #b3b3b3;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .status-text {
+      font-size: 13px;
+    }
+    .logs {
+      background: #2d2d2d;
+      border-radius: 6px;
+      padding: 12px;
+      max-height: 250px;
+      overflow-y: auto;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 11px;
+    }
+    .log-entry {
+      padding: 4px 0;
+      border-bottom: 1px solid #3d3d3d;
+    }
+    .log-entry:last-child {
+      border-bottom: none;
+    }
+    .log-time {
+      color: #666;
+      margin-right: 8px;
+    }
+    .log-type {
+      margin-right: 8px;
+      font-weight: 600;
+    }
+    .log-type.info {
+      color: #2196f3;
+    }
+    .log-type.success {
+      color: #4caf50;
+    }
+    .log-type.error {
+      color: #f44336;
+    }
+    .log-type.command {
+      color: #ff9800;
+    }
+    button {
+      background: #3d3d3d;
+      color: #ffffff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    button:hover {
+      background: #4d4d4d;
+    }
+    button:active {
+      background: #2d2d2d;
+    }
+    .section-title {
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #b3b3b3;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="status disconnected" id="status">
+      <div class="status-label">Connection Status</div>
+      <div class="status-text" id="statusText">Disconnected</div>
+    </div>
+
+    <button id="reconnectBtn" style="display: none;">Reconnect</button>
+
+    <div>
+      <div class="section-title">Activity Log</div>
+      <div class="logs" id="logs"></div>
+    </div>
+  </div>
+
+  <script>
+    let ws = null;
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 10;
+    const reconnectDelay = 3000;
+
+    const statusEl = document.getElementById('status');
+    const statusTextEl = document.getElementById('statusText');
+    const logsEl = document.getElementById('logs');
+    const reconnectBtn = document.getElementById('reconnectBtn');
+
+    function log(message, type = 'info') {
+      const time = new Date().toLocaleTimeString();
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      entry.innerHTML = `
+        <span class="log-time">${time}</span>
+        <span class="log-type ${type}">${type.toUpperCase()}</span>
+        <span>${message}</span>
+      `;
+      logsEl.appendChild(entry);
+      logsEl.scrollTop = logsEl.scrollHeight;
+
+      if (logsEl.children.length > 100) {
+        logsEl.removeChild(logsEl.firstChild);
+      }
+    }
+
+    function updateStatus(status, text) {
+      statusEl.className = `status ${status}`;
+      statusTextEl.textContent = text;
+    }
+
+    function connect() {
+      try {
+        updateStatus('connecting', 'Connecting to bridge server...');
+        log('Attempting to connect to ws://localhost:3000', 'info');
+
+        ws = new WebSocket('ws://localhost:3000');
+
+        ws.onopen = () => {
+          reconnectAttempts = 0;
+          updateStatus('connected', 'Connected to bridge server');
+          log('WebSocket connection established', 'success');
+          reconnectBtn.style.display = 'none';
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const command = JSON.parse(event.data);
+            log(`Received command: ${command.type}`, 'command');
+            parent.postMessage({ pluginMessage: command }, '*');
+          } catch (error) {
+            log(`Error parsing message: ${error.message}`, 'error');
+          }
+        };
+
+        ws.onerror = (error) => {
+          log('WebSocket error occurred', 'error');
+          console.error('WebSocket error:', error);
+        };
+
+        ws.onclose = () => {
+          updateStatus('disconnected', 'Disconnected from bridge server');
+          log('WebSocket connection closed', 'error');
+
+          if (reconnectAttempts < maxReconnectAttempts) {
+            reconnectAttempts++;
+            log(`Reconnecting in ${reconnectDelay / 1000}s (attempt ${reconnectAttempts}/${maxReconnectAttempts})`, 'info');
+            setTimeout(connect, reconnectDelay);
+          } else {
+            log('Max reconnection attempts reached', 'error');
+            reconnectBtn.style.display = 'block';
+          }
+        };
+      } catch (error) {
+        log(`Connection error: ${error.message}`, 'error');
+        updateStatus('disconnected', 'Connection failed');
+        reconnectBtn.style.display = 'block';
+      }
+    }
+
+    reconnectBtn.onclick = () => {
+      reconnectAttempts = 0;
+      reconnectBtn.style.display = 'none';
+      connect();
+    };
+
+    window.onmessage = (event) => {
+      const response = event.data.pluginMessage;
+      if (response && ws && ws.readyState === WebSocket.OPEN) {
+        log(`Sending response for command ${response.id}`, response.success ? 'success' : 'error');
+        ws.send(JSON.stringify(response));
+      }
+    };
+
+    log('Figma Bridge initialized', 'info');
+    connect();
+  </script>
+</body>
+</html>

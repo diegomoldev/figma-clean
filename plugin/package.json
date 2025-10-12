@@ -1,0 +1,30 @@
+{
+  "name": "figma-bridge-plugin",
+  "version": "1.0.0",
+  "description": "WebSocket bridge for programmatic Figma control",
+  "scripts": {
+    "build": "rimraf dist && node esbuild.config.js",
+    "watch": "node esbuild.config.js --watch"
+  },
+  "devDependencies": {
+    "@figma/eslint-plugin-figma-plugins": "^0.15.0",
+    "@figma/plugin-typings": "^1.99.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "esbuild": "^0.25.10",
+    "eslint": "^8.0.0",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.3.0"
+  },
+  "eslintConfig": {
+    "extends": [
+      "eslint:recommended",
+      "plugin:@typescript-eslint/recommended",
+      "plugin:@figma/figma-plugins/recommended"
+    ],
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+      "project": "./tsconfig.json"
+    }
+  }
+}

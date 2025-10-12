@@ -1,0 +1,18 @@
+{
+  "name": "Figma Bridge",
+  "id": "figma-bridge-plugin",
+  "api": "1.0.0",
+  "main": "dist/code.js",
+  "ui": "dist/ui.html",
+  "editorType": ["figma"],
+  "networkAccess": {
+    "allowedDomains": [
+      "wss://localhost:3000"
+    ],
+    "devAllowedDomains": [
+      "ws://localhost:3000",
+      "wss://localhost:3000"
+    ],
+    "reasoning": "Figma Bridge connects to a local WebSocket server to receive commands from external automation tools."
+  }
+}

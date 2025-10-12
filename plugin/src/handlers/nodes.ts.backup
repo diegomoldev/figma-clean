@@ -1,0 +1,807 @@
+import { Command, CommandResponse } from '../types';
+
+// Helper function to load all fonts used in a text node
+async function loadTextFonts(textNode: TextNode): Promise<void> {
+  const fontNames = textNode.getRangeAllFontNames(0, textNode.characters.length);
+  await Promise.all(fontNames.map(figma.loadFontAsync));
+}
+
+// Helper function to apply common properties to nodes
+function applyCommonProperties(node: SceneNode, props: any): void {
+  if (props.name !== undefined) node.name = props.name;
+  if (props.visible !== undefined) node.visible = props.visible;
+  if (props.locked !== undefined) node.locked = props.locked;
+  if (props.opacity !== undefined) node.opacity = props.opacity;
+
+  if ('x' in node && props.x !== undefined) (node as FrameNode | RectangleNode | TextNode | EllipseNode).x = props.x;
+  if ('y' in node && props.y !== undefined) (node as FrameNode | RectangleNode | TextNode | EllipseNode).y = props.y;
+
+  // Handle sizing - for text nodes with textAutoResize: HEIGHT, only set width
+  if ('resize' in node && props.width !== undefined) {
+    if (node.type === 'TEXT') {
+      const textNode = node as TextNode;
+      // If textAutoResize is HEIGHT, only set width, not height
+      if (textNode.textAutoResize === 'HEIGHT') {
+        textNode.resize(props.width, textNode.height);
+      } else if (props.height !== undefined) {
+        textNode.resize(props.width, props.height);
+      }
+    } else if (props.height !== undefined) {
+      (node as FrameNode | RectangleNode | EllipseNode).resize(props.width, props.height);
+    }
+  }
+
+  if ('fills' in node && props.fills !== undefined) {
+    (node as GeometryMixin).fills = props.fills as Paint[];
+  }
+  if ('strokes' in node && props.strokes !== undefined) {
+    (node as GeometryMixin).strokes = props.strokes as Paint[];
+  }
+  if ('strokeWeight' in node && props.strokeWeight !== undefined) {
+    (node as GeometryMixin).strokeWeight = props.strokeWeight;
+  }
+  if ('strokeAlign' in node && props.strokeAlign !== undefined) {
+    (node as GeometryMixin).strokeAlign = props.strokeAlign;
+  }
+  if ('effects' in node && props.effects !== undefined) {
+    (node as BlendMixin).effects = props.effects as Effect[];
+  }
+
+  // Layout properties for auto-layout children
+  if ('layoutAlign' in node && props.layoutAlign !== undefined) {
+    (node as SceneNode & LayoutMixin).layoutAlign = props.layoutAlign;
+  }
+  if ('layoutGrow' in node && props.layoutGrow !== undefined) {
+    (node as SceneNode & LayoutMixin).layoutGrow = props.layoutGrow;
+  }
+  if ('layoutPositioning' in node && props.layoutPositioning !== undefined) {
+    (node as SceneNode & LayoutMixin).layoutPositioning = props.layoutPositioning;
+  }
+}
+
+// Helper function to apply frame-specific properties
+function applyFrameProperties(frame: FrameNode, props: any): void {
+  if (props.cornerRadius !== undefined) frame.cornerRadius = props.cornerRadius;
+  if (props.clipsContent !== undefined) frame.clipsContent = props.clipsContent;
+
+  // Auto layout properties
+  if (props.layoutMode !== undefined) frame.layoutMode = props.layoutMode;
+  if (props.primaryAxisSizingMode !== undefined) frame.primaryAxisSizingMode = props.primaryAxisSizingMode;
+  if (props.counterAxisSizingMode !== undefined) frame.counterAxisSizingMode = props.counterAxisSizingMode;
+  if (props.primaryAxisAlignItems !== undefined) frame.primaryAxisAlignItems = props.primaryAxisAlignItems;
+  if (props.counterAxisAlignItems !== undefined) frame.counterAxisAlignItems = props.counterAxisAlignItems;
+  if (props.paddingLeft !== undefined) frame.paddingLeft = props.paddingLeft;
+  if (props.paddingRight !== undefined) frame.paddingRight = props.paddingRight;
+  if (props.paddingTop !== undefined) frame.paddingTop = props.paddingTop;
+  if (props.paddingBottom !== undefined) frame.paddingBottom = props.paddingBottom;
+  if (props.itemSpacing !== undefined) frame.itemSpacing = props.itemSpacing;
+  if (props.layoutWrap !== undefined) frame.layoutWrap = props.layoutWrap;
+  if (props.counterAxisSpacing !== undefined) frame.counterAxisSpacing = props.counterAxisSpacing;
+}
+
+// Helper function to create child nodes recursively
+async function createChildNodes(parent: FrameNode | GroupNode, children: any[]): Promise<void> {
+  for (const childData of children) {
+    let child: SceneNode;
+
+    switch (childData.type) {
+      case 'FRAME':
+        child = figma.createFrame();
+        applyCommonProperties(child, childData);
+        applyFrameProperties(child as FrameNode, childData);
+        if (childData.children) {
+          await createChildNodes(child as FrameNode, childData.children);
+        }
+        break;
+
+      case 'RECTANGLE':
+        child = figma.createRectangle();
+        applyCommonProperties(child, childData);
+        if (childData.cornerRadius !== undefined) (child as RectangleNode).cornerRadius = childData.cornerRadius;
+        break;
+
+      case 'TEXT':
+        child = figma.createText();
+
+        // Load Inter Regular first (default font for new text nodes)
+        await figma.loadFontAsync({ family: 'Inter', style: 'Regular' });
+
+        // Load target font if different from Inter Regular
+        const fontName = childData.fontName || { family: 'Inter', style: 'Regular' };
+        if (fontName.family !== 'Inter' || fontName.style !== 'Regular') {
+          await figma.loadFontAsync(fontName as FontName);
+          // Change font immediately to avoid issues with textAutoResize
+          (child as TextNode).fontName = fontName as FontName;
+        }
+
+        // Append to parent FIRST (required for layout sizing properties)
+        parent.appendChild(child);
+
+        // Set textAutoResize and layout sizing BEFORE setting width via applyCommonProperties
+        if (childData.textAutoResize !== undefined) (child as TextNode).textAutoResize = childData.textAutoResize;
+        if (childData.layoutSizingHorizontal !== undefined) (child as TextNode).layoutSizingHorizontal = childData.layoutSizingHorizontal;
+        if (childData.layoutSizingVertical !== undefined) (child as TextNode).layoutSizingVertical = childData.layoutSizingVertical;
+        applyCommonProperties(child, childData);
+        if (childData.characters !== undefined) (child as TextNode).characters = childData.characters;
+        if (childData.fontSize !== undefined) (child as TextNode).fontSize = childData.fontSize;
+        if (childData.fontName !== undefined) (child as TextNode).fontName = childData.fontName as FontName;
+        if (childData.textAlignHorizontal !== undefined) (child as TextNode).textAlignHorizontal = childData.textAlignHorizontal;
+        if (childData.textAlignVertical !== undefined) (child as TextNode).textAlignVertical = childData.textAlignVertical;
+        if (childData.lineHeight !== undefined) (child as TextNode).lineHeight = childData.lineHeight;
+        if (childData.letterSpacing !== undefined) (child as TextNode).letterSpacing = childData.letterSpacing;
+        continue; // Skip the appendChild at the end since we already did it
+
+      case 'ELLIPSE':
+        child = figma.createEllipse();
+        applyCommonProperties(child, childData);
+        break;
+
+      case 'GROUP':
+        const tempFrame = figma.createFrame();
+        await createChildNodes(tempFrame, childData.children || []);
+        child = figma.group(tempFrame.children as SceneNode[], parent);
+        tempFrame.remove();
+        applyCommonProperties(child, childData);
+        break;
+
+      default:
+        continue;
+    }
+
+    parent.appendChild(child);
+  }
+}
+
+// 1. sync-frame: Create or update frame
+export async function handleSyncFrame(msg: Command): Promise<CommandResponse> {
+  try {
+    const { id, name, parentId, ...props } = msg.payload;
+    let frame: FrameNode;
+    let parent: BaseNode & ChildrenMixin = figma.currentPage;
+
+    // Resolve parent if parentId is provided
+    if (parentId) {
+      const parentNode = figma.getNodeById(parentId);
+      if (!parentNode || !('appendChild' in parentNode)) {
+        return { id: msg.id, success: false, error: `Parent node with id '${parentId}' not found or cannot have children` };
+      }
+      parent = parentNode as BaseNode & ChildrenMixin;
+    }
+
+    if (id) {
+      const node = figma.getNodeById(id);
+      if (node && node.type === 'FRAME') {
+        frame = node as FrameNode;
+      } else {
+        return { id: msg.id, success: false, error: `Frame with id '${id}' not found` };
+      }
+    } else if (name) {
+      const existing = parent.findOne((n) => n.type === 'FRAME' && n.name === name);
+      if (existing) {
+        frame = existing as FrameNode;
+      } else {
+        frame = figma.createFrame();
+        frame.name = name;
+        parent.appendChild(frame);
+      }
+    } else {
+      frame = figma.createFrame();
+      parent.appendChild(frame);
+    }
+
+    applyCommonProperties(frame, props);
+    applyFrameProperties(frame, props);
+
+    if (props.children) {
+      frame.children.forEach((child) => child.remove());
+      await createChildNodes(frame, props.children);
+    }
+
+    return {
+      id: msg.id,
+      success: true,
+      data: { nodeId: frame.id, name: frame.name, type: frame.type }
+    };
+  } catch (error) {
+    return { id: msg.id, success: false, error: String(error) };
+  }
+}
+
+// 2. sync-rectangle: Create or update rectangle
+export async function handleSyncRectangle(msg: Command): Promise<CommandResponse> {
+  try {
+    const { id, name, parentId, ...props } = msg.payload;
+    let rect: RectangleNode;
+    let parent: BaseNode & ChildrenMixin = figma.currentPage;
+
+    // Resolve parent if parentId is provided
+    if (parentId) {
+      const parentNode = figma.getNodeById(parentId);
+      if (!parentNode || !('appendChild' in parentNode)) {
+        return { id: msg.id, success: false, error: `Parent node with id '${parentId}' not found or cannot have children` };
+      }
+      parent = parentNode as BaseNode & ChildrenMixin;
+    }
+
+    if (id) {
+      const node = figma.getNodeById(id);
+      if (node && node.type === 'RECTANGLE') {
+        rect = node as RectangleNode;
+      } else {
+        return { id: msg.id, success: false, error: `Rectangle with id '${id}' not found` };
+      }
+    } else if (name) {
+      const existing = parent.findOne((n) => n.type === 'RECTANGLE' && n.name === name);
+      if (existing) {
+        rect = existing as RectangleNode;
+      } else {
+        rect = figma.createRectangle();
+        rect.name = name;
+        parent.appendChild(rect);
+      }
+    } else {
+      rect = figma.createRectangle();
+      parent.appendChild(rect);
+    }
+
+    applyCommonProperties(rect, props);
+    if (props.cornerRadius !== undefined) rect.cornerRadius = props.cornerRadius;
+    if (props.topLeftRadius !== undefined) rect.topLeftRadius = props.topLeftRadius;
+    if (props.topRightRadius !== undefined) rect.topRightRadius = props.topRightRadius;
+    if (props.bottomLeftRadius !== undefined) rect.bottomLeftRadius = props.bottomLeftRadius;
+    if (props.bottomRightRadius !== undefined) rect.bottomRightRadius = props.bottomRightRadius;
+
+    return {
+      id: msg.id,
+      success: true,
+      data: { nodeId: rect.id, name: rect.name, type: rect.type }
+    };
+  } catch (error) {
+    return { id: msg.id, success: false, error: String(error) };
+  }
+}
+
+// 3. sync-text: Create or update text node
+export async function handleSyncText(msg: Command): Promise<CommandResponse> {
+  try {
+    const { id, name, ...props } = msg.payload;
+    let text: TextNode;
+
+    if (id) {
+      const node = figma.getNodeById(id);
+      if (node && node.type === 'TEXT') {
+        text = node as TextNode;
+      } else {
+        return { id: msg.id, success: false, error: `Text node with id '${id}' not found` };
+      }
+    } else if (name) {
+      const existing = figma.currentPage.findOne((n) => n.type === 'TEXT' && n.name === name);
+      if (existing) {
+        text = existing as TextNode;
+      } else {
+        text = figma.createText();
+        text.name = name;
+        figma.currentPage.appendChild(text);
+      }
+    } else {
+      text = figma.createText();
+      figma.currentPage.appendChild(text);
+    }
+
+    // Load fonts before modifying text
+    // For new text nodes or when changing font, load the target font
+    if (props.fontName) {
+      await figma.loadFontAsync(props.fontName as FontName);
+    }
+
+    // Always load Inter Regular as default since createText() uses it
+    await figma.loadFontAsync({ family: 'Inter', style: 'Regular' });
+
+    // If updating existing text with characters, load all existing fonts
+    if (text.characters.length > 0 && (props.characters !== undefined || props.fontSize !== undefined)) {
+      await loadTextFonts(text);
+    }
+
+    // Set textAutoResize and layout sizing BEFORE applying common properties (which includes resize)
+    if (props.textAutoResize !== undefined) text.textAutoResize = props.textAutoResize;
+    if (props.layoutSizingHorizontal !== undefined) text.layoutSizingHorizontal = props.layoutSizingHorizontal;
+    if (props.layoutSizingVertical !== undefined) text.layoutSizingVertical = props.layoutSizingVertical;
+    applyCommonProperties(text, props);
+    if (props.characters !== undefined) text.characters = props.characters;
+    if (props.fontSize !== undefined) text.fontSize = props.fontSize;
+    if (props.fontName !== undefined) text.fontName = props.fontName as FontName;
+    if (props.textAlignHorizontal !== undefined) text.textAlignHorizontal = props.textAlignHorizontal;
+    if (props.textAlignVertical !== undefined) text.textAlignVertical = props.textAlignVertical;
+    if (props.lineHeight !== undefined) text.lineHeight = props.lineHeight;
+    if (props.letterSpacing !== undefined) text.letterSpacing = props.letterSpacing;
+    if (props.textCase !== undefined) text.textCase = props.textCase;
+    if (props.textDecoration !== undefined) text.textDecoration = props.textDecoration;
+
+    return {
+      id: msg.id,
+      success: true,
+      data: { nodeId: text.id, name: text.name, type: text.type }
+    };
+  } catch (error) {
+    return { id: msg.id, success: false, error: String(error) };
+  }
+}
+
+// 4. sync-ellipse: Create or update ellipse
+export async function handleSyncEllipse(msg: Command): Promise<CommandResponse> {
+  try {
+    const { id, name, ...props } = msg.payload;
+    let ellipse: EllipseNode;
+
+    if (id) {
+      const node = figma.getNodeById(id);
+      if (node && node.type === 'ELLIPSE') {
+        ellipse = node as EllipseNode;
+      } else {
+        return { id: msg.id, success: false, error: `Ellipse with id '${id}' not found` };
+      }
+    } else if (name) {
+      const existing = figma.currentPage.findOne((n) => n.type === 'ELLIPSE' && n.name === name);
+      if (existing) {
+        ellipse = existing as EllipseNode;
+      } else {
+        ellipse = figma.createEllipse();
+        ellipse.name = name;
+        figma.currentPage.appendChild(ellipse);
+      }
+    } else {
+      ellipse = figma.createEllipse();
+      figma.currentPage.appendChild(ellipse);
+    }
+
+    applyCommonProperties(ellipse, props);
+
+    return {
+      id: msg.id,
+      success: true,
+      data: { nodeId: ellipse.id, name: ellipse.name, type: ellipse.type }
+    };
+  } catch (error) {
+    return { id: msg.id, success: false, error: String(error) };
+  }
+}
+
+// 5. sync-group: Create or update group
+export async function handleSyncGroup(msg: Command): Promise<CommandResponse> {
+  try {
+    const { id, name, children, ...props } = msg.payload;
+
+    if (!children || children.length === 0) {
+      return { id: msg.id, success: false, error: 'Groups must have at least one child' };
+    }
+
+    let group: GroupNode;
+
+    if (id) {
+      const node = figma.getNodeById(id);
+      if (node && node.type === 'GROUP') {
+        group = node as GroupNode;
+        group.children.forEach((child) => child.remove());
+      } else {
+        return { id: msg.id, success: false, error: `Group with id '${id}' not found` };
+      }
+    } else {
+      const tempFrame = figma.createFrame();
+      await createChildNodes(tempFrame, children);
+      group = figma.group(tempFrame.children as SceneNode[], figma.currentPage);
+      tempFrame.remove();
+
+      if (name) group.name = name;
+    }
+
+    applyCommonProperties(group, props);
+
+    return {
+      id: msg.id,
+      success: true,
+      data: { nodeId: group.id, name: group.name, type: group.type }
+    };
+  } catch (error) {
+    return { id: msg.id, success: false, error: String(error) };
+  }
+}
+
+// Helper function to serialize node to JSON
+function serializeNode(node: SceneNode, depth: number, maxDepth: number): any {
+  const base: any = {
+    id: node.id,
+    name: node.name,
+    type: node.type,
+    visible: node.visible,
+    locked: node.locked
+  };
+
+  if ('x' in node) base.x = (node as FrameNode).x;
+  if ('y' in node) base.y = (node as FrameNode).y;
+  if ('width' in node) base.width = (node as FrameNode).width;
+  if ('height' in node) base.height = (node as FrameNode).height;
+  if ('opacity' in node) base.opacity = (node as BlendMixin).opacity;
+
+  if ('fills' in node) base.fills = [...(node as GeometryMixin).fills];
+  if ('strokes' in node) base.strokes = [...(node as GeometryMixin).strokes];
+  if ('strokeWeight' in node) base.strokeWeight = (node as GeometryMixin).strokeWeight;
+  if ('effects' in node) base.effects = [...(node as BlendMixin).effects];
+
+  if (node.type === 'FRAME') {
+    const frame = node as FrameNode;
+    base.cornerRadius = frame.cornerRadius;
+    base.clipsContent = frame.clipsContent;
+    base.layoutMode = frame.layoutMode;
+    if (frame.layoutMode !== 'NONE') {
+      base.primaryAxisSizingMode = frame.primaryAxisSizingMode;
+      base.counterAxisSizingMode = frame.counterAxisSizingMode;
+      base.primaryAxisAlignItems = frame.primaryAxisAlignItems;
+      base.counterAxisAlignItems = frame.counterAxisAlignItems;
+      base.paddingLeft = frame.paddingLeft;
+      base.paddingRight = frame.paddingRight;
+      base.paddingTop = frame.paddingTop;
+      base.paddingBottom = frame.paddingBottom;
+      base.itemSpacing = frame.itemSpacing;
+    }
+  }
+
+  if (node.type === 'RECTANGLE') {
+    const rect = node as RectangleNode;
+    base.cornerRadius = rect.cornerRadius;
+    base.topLeftRadius = rect.topLeftRadius;
+    base.topRightRadius = rect.topRightRadius;
+    base.bottomLeftRadius = rect.bottomLeftRadius;
+    base.bottomRightRadius = rect.bottomRightRadius;
+  }
+
+  if (node.type === 'TEXT') {
+    const text = node as TextNode;
+    base.characters = text.characters;
+    base.fontSize = text.fontSize;
+    base.fontName = text.fontName;
+    base.textAlignHorizontal = text.textAlignHorizontal;
+    base.textAlignVertical = text.textAlignVertical;
+    base.lineHeight = text.lineHeight;
+    base.letterSpacing = text.letterSpacing;
+  }
+
+  if ('children' in node && depth < maxDepth) {
+    base.children = (node as FrameNode | GroupNode).children.map((child) =>
+      serializeNode(child as SceneNode, depth + 1, maxDepth)
+    );
+  }
+
+  return base;
+}
+
+// 6. read-nodes: Read nodes with filters
+export async function handleReadNodes(msg: Command): Promise<CommandResponse> {
+  try {
+    const { type, name, parentId, maxDepth = 10 } = msg.payload || {};
+    let nodes: SceneNode[] = [];
+
+    if (parentId) {
+      const parent = figma.getNodeById(parentId);
+      if (parent && 'children' in parent) {
+        nodes = (parent as FrameNode).children as SceneNode[];
+      }
+    } else {
+      nodes = figma.currentPage.children as SceneNode[];
+    }
+
+    if (type) {
+      nodes = nodes.filter((n) => n.type === type);
+    }
+
+    if (name) {
+      const nameRegex = new RegExp(name);
+      nodes = nodes.filter((n) => nameRegex.test(n.name));
+    }
+
+    const serialized = nodes.map((node) => serializeNode(node, 0, maxDepth));
+
+    return {
+      id: msg.id,
+      success: true,
+      data: { nodes: serialized, count: serialized.length }
+    };
+  } catch (error) {
+    return { id: msg.id, success: false, error: String(error) };
+  }
+}
+
+// 7. delete-node: Delete single node
+export async function handleDeleteNode(msg: Command): Promise<CommandResponse> {
+  try {
+    const { id } = msg.payload;
+
+    if (!id) {
+      return { id: msg.id, success: false, error: 'Node id is required' };
+    }
+
+    const node = figma.getNodeById(id);
+    if (!node) {
+      return { id: msg.id, success: false, error: `Node with id '${id}' not found` };
+    }
+
+    const nodeInfo = { id: node.id, name: node.name, type: node.type };
+    node.remove();
+
+    return {
+      id: msg.id,
+      success: true,
+      data: { deleted: nodeInfo }
+    };
+  } catch (error) {
+    return { id: msg.id, success: false, error: String(error) };
+  }
+}
+
+// 8. delete-nodes: Bulk delete nodes
+export async function handleDeleteNodes(msg: Command): Promise<CommandResponse> {
+  try {
+    const { type, name, parentId } = msg.payload || {};
+    let nodes: SceneNode[] = [];
+
+    if (parentId) {
+      const parent = figma.getNodeById(parentId);
+      if (parent && 'children' in parent) {
+        nodes = (parent as FrameNode).children as SceneNode[];
+      }
+    } else {
+      nodes = figma.currentPage.children as SceneNode[];
+    }
+
+    if (type) {
+      nodes = nodes.filter((n) => n.type === type);
+    }
+
+    if (name) {
+      const nameRegex = new RegExp(name);
+      nodes = nodes.filter((n) => nameRegex.test(n.name));
+    }
+
+    const deleted = nodes.map((node) => ({ id: node.id, name: node.name, type: node.type }));
+    nodes.forEach((node) => node.remove());
+
+    return {
+      id: msg.id,
+      success: true,
+      data: { deleted, count: deleted.length }
+    };
+  } catch (error) {
+    return { id: msg.id, success: false, error: String(error) };
+  }
+}
+
+// 9. sync-line: Create or update line
+export async function handleSyncLine(msg: Command): Promise<CommandResponse> {
+  try {
+    const { id, name, ...props } = msg.payload;
+    let line: LineNode;
+
+    if (id) {
+      const node = figma.getNodeById(id);
+      if (node && node.type === 'LINE') {
+        line = node as LineNode;
+      } else {
+        return { id: msg.id, success: false, error: `Line with id '${id}' not found` };
+      }
+    } else if (name) {
+      const existing = figma.currentPage.findOne((n) => n.type === 'LINE' && n.name === name);
+      if (existing) {
+        line = existing as LineNode;
+      } else {
+        line = figma.createLine();
+        line.name = name;
+        figma.currentPage.appendChild(line);
+      }
+    } else {
+      line = figma.createLine();
+      figma.currentPage.appendChild(line);
+    }
+
+    applyCommonProperties(line, props);
+
+    return {
+      id: msg.id,
+      success: true,
+      data: { nodeId: line.id, name: line.name, type: line.type }
+    };
+  } catch (error) {
+    return { id: msg.id, success: false, error: String(error) };
+  }
+}
+
+// 10. sync-polygon: Create or update polygon
+export async function handleSyncPolygon(msg: Command): Promise<CommandResponse> {
+  try {
+    const { id, name, ...props } = msg.payload;
+    let polygon: PolygonNode;
+
+    if (id) {
+      const node = figma.getNodeById(id);
+      if (node && node.type === 'POLYGON') {
+        polygon = node as PolygonNode;
+      } else {
+        return { id: msg.id, success: false, error: `Polygon with id '${id}' not found` };
+      }
+    } else if (name) {
+      const existing = figma.currentPage.findOne((n) => n.type === 'POLYGON' && n.name === name);
+      if (existing) {
+        polygon = existing as PolygonNode;
+      } else {
+        polygon = figma.createPolygon();
+        polygon.name = name;
+        figma.currentPage.appendChild(polygon);
+      }
+    } else {
+      polygon = figma.createPolygon();
+      figma.currentPage.appendChild(polygon);
+    }
+
+    applyCommonProperties(polygon, props);
+    if (props.pointCount !== undefined) polygon.pointCount = props.pointCount;
+
+    return {
+      id: msg.id,
+      success: true,
+      data: { nodeId: polygon.id, name: polygon.name, type: polygon.type }
+    };
+  } catch (error) {
+    return { id: msg.id, success: false, error: String(error) };
+  }
+}
+
+// 11. sync-star: Create or update star
+export async function handleSyncStar(msg: Command): Promise<CommandResponse> {
+  try {
+    const { id, name, ...props } = msg.payload;
+    let star: StarNode;
+
+    if (id) {
+      const node = figma.getNodeById(id);
+      if (node && node.type === 'STAR') {
+        star = node as StarNode;
+      } else {
+        return { id: msg.id, success: false, error: `Star with id '${id}' not found` };
+      }
+    } else if (name) {
+      const existing = figma.currentPage.findOne((n) => n.type === 'STAR' && n.name === name);
+      if (existing) {
+        star = existing as StarNode;
+      } else {
+        star = figma.createStar();
+        star.name = name;
+        figma.currentPage.appendChild(star);
+      }
+    } else {
+      star = figma.createStar();
+      figma.currentPage.appendChild(star);
+    }
+
+    applyCommonProperties(star, props);
+    if (props.pointCount !== undefined) star.pointCount = props.pointCount;
+    if (props.innerRadius !== undefined) star.innerRadius = props.innerRadius;
+
+    return {
+      id: msg.id,
+      success: true,
+      data: { nodeId: star.id, name: star.name, type: star.type }
+    };
+  } catch (error) {
+    return { id: msg.id, success: false, error: String(error) };
+  }
+}
+
+// 12. sync-vector: Create or update vector
+export async function handleSyncVector(msg: Command): Promise<CommandResponse> {
+  try {
+    const { id, name, ...props } = msg.payload;
+    let vector: VectorNode;
+
+    if (id) {
+      const node = figma.getNodeById(id);
+      if (node && node.type === 'VECTOR') {
+        vector = node as VectorNode;
+      } else {
+        return { id: msg.id, success: false, error: `Vector with id '${id}' not found` };
+      }
+    } else if (name) {
+      const existing = figma.currentPage.findOne((n) => n.type === 'VECTOR' && n.name === name);
+      if (existing) {
+        vector = existing as VectorNode;
+      } else {
+        vector = figma.createVector();
+        vector.name = name;
+        figma.currentPage.appendChild(vector);
+      }
+    } else {
+      vector = figma.createVector();
+      figma.currentPage.appendChild(vector);
+    }
+
+    applyCommonProperties(vector, props);
+    if (props.vectorPaths !== undefined) vector.vectorPaths = props.vectorPaths;
+    if (props.vectorNetwork !== undefined) vector.vectorNetwork = props.vectorNetwork;
+
+    return {
+      id: msg.id,
+      success: true,
+      data: { nodeId: vector.id, name: vector.name, type: vector.type }
+    };
+  } catch (error) {
+    return { id: msg.id, success: false, error: String(error) };
+  }
+}
+
+// 13. update-node: Update any node's properties and optionally move to new parent
+export async function handleUpdateNode(msg: Command): Promise<CommandResponse> {
+  try {
+    const { nodeId, parentId, ...props } = msg.payload;
+
+    if (!nodeId) {
+      return { id: msg.id, success: false, error: 'nodeId is required' };
+    }
+
+    const node = figma.getNodeById(nodeId);
+    if (!node) {
+      return { id: msg.id, success: false, error: `Node with id '${nodeId}' not found` };
+    }
+
+    // Handle parent change if parentId is provided
+    if (parentId) {
+      const newParent = figma.getNodeById(parentId);
+      if (!newParent) {
+        return { id: msg.id, success: false, error: `Parent node with id '${parentId}' not found` };
+      }
+      if (!('appendChild' in newParent)) {
+        return { id: msg.id, success: false, error: 'Target parent cannot have children' };
+      }
+
+      // Move node to new parent
+      (newParent as FrameNode | GroupNode).appendChild(node as SceneNode);
+    }
+
+    // Handle text-specific updates
+    if (node.type === 'TEXT') {
+      const textNode = node as TextNode;
+
+      // Load fonts if needed
+      if (props.fontName) {
+        await figma.loadFontAsync(props.fontName as FontName);
+      }
+      if (textNode.characters.length > 0 && (props.characters !== undefined || props.fontSize !== undefined)) {
+        await loadTextFonts(textNode);
+      }
+
+      // Set textAutoResize BEFORE width changes
+      if (props.textAutoResize !== undefined) textNode.textAutoResize = props.textAutoResize;
+      if (props.layoutSizingHorizontal !== undefined) textNode.layoutSizingHorizontal = props.layoutSizingHorizontal;
+      if (props.layoutSizingVertical !== undefined) textNode.layoutSizingVertical = props.layoutSizingVertical;
+
+      applyCommonProperties(textNode, props);
+
+      if (props.characters !== undefined) textNode.characters = props.characters;
+      if (props.fontSize !== undefined) textNode.fontSize = props.fontSize;
+      if (props.fontName !== undefined) textNode.fontName = props.fontName as FontName;
+      if (props.textAlignHorizontal !== undefined) textNode.textAlignHorizontal = props.textAlignHorizontal;
+      if (props.textAlignVertical !== undefined) textNode.textAlignVertical = props.textAlignVertical;
+      if (props.lineHeight !== undefined) textNode.lineHeight = props.lineHeight;
+      if (props.letterSpacing !== undefined) textNode.letterSpacing = props.letterSpacing;
+    } else if (node.type === 'FRAME') {
+      applyCommonProperties(node as SceneNode, props);
+      applyFrameProperties(node as FrameNode, props);
+    } else {
+      applyCommonProperties(node as SceneNode, props);
+    }
+
+    return {
+      id: msg.id,
+      success: true,
+      data: { nodeId: node.id, name: node.name, type: node.type }
+    };
+  } catch (error) {
+    return { id: msg.id, success: false, error: String(error) };
+  }
+}

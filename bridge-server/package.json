@@ -1,0 +1,24 @@
+{
+  "name": "figma-bridge-server",
+  "version": "1.0.0",
+  "description": "WebSocket bridge server for Figma plugin communication",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "tsc && node dist/server.js",
+    "watch": "tsc --watch"
+  },
+  "dependencies": {
+    "ws": "^8.18.0",
+    "express": "^4.21.2",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.10",
+    "@types/ws": "^8.5.13",
+    "@types/express": "^5.0.0",
+    "@types/cors": "^2.8.17",
+    "typescript": "^5.3.0"
+  }
+}
