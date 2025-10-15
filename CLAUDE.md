@@ -7,7 +7,7 @@ When working on this project, refer to these official Figma plugin API reference
 - **Quickstart Guide:** https://developers.figma.com/docs/plugins/plugin-quickstart-guide/
 - **Global Objects:** https://developers.figma.com/docs/plugins/api/global-objects/
 
-## Project Purpose
+## Project Purpose ohohohohoohohoh
 
 This project is a **development tool** for building and testing a Figma plugin with WebSocket bridge architecture. The primary goal is to develop the plugin functionality, NOT to populate Figma with design systems.
 
