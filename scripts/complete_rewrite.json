@@ -1,0 +1,32 @@
+{
+  "commands": [
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1226;2525:10292",
+        "characters": "Create consistent, maintainable design systems that scale across your entire product. We establish design foundations that empower teams to build faster and better."
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1229;2481:7558",
+        "characters": "Start with solid foundations. We establish design tokens, spacing scales and typography systems that create consistency from day one."
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1230;2481:7217",
+        "characters": "Scale design efficiently across teams. Well-structured design systems help teams work faster and maintain quality as your product grows."
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1233;2443:4716",
+        "characters": "Empower teams to build better products. The right design system makes collaboration seamless and helps your product feel cohesive."
+      }
+    }
+  ]
+}

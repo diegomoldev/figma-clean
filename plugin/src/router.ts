@@ -9,11 +9,16 @@ import {
   handleSyncEllipse,
   handleSyncGroup,
   handleReadNodes,
+  handleGetNodesByIds,
   handleDeleteNode,
   handleDeleteNodes,
   handleUpdateNode,
   handleGetSelection,
-  handleSetSelection
+  handleSetSelection,
+  handleReadTextFormatting,
+  handleUpdateTextFormatting,
+  handleReorderChildren,
+  handleReadTextContent
 } from './handlers/nodes';
 import {
   handleSetAutoLayout,
@@ -40,6 +45,8 @@ import {
 } from './handlers/pages';
 import { handleExportImage } from './handlers/export';
 import { handleBatchCommands } from './handlers/batch';
+import { handleFindAllColors, handleReplaceColorsBatch } from './handlers/colors';
+import { handleReplaceAllColors } from './handlers/globalColors';
 
 export async function routeCommand(msg: Command): Promise<CommandResponse> {
   switch (msg.type) {
@@ -67,6 +74,8 @@ export async function routeCommand(msg: Command): Promise<CommandResponse> {
       return await handleSyncGroup(msg);
     case 'read-nodes':
       return await handleReadNodes(msg);
+    case 'get-nodes-by-ids':
+      return await handleGetNodesByIds(msg);
     case 'delete-node':
       return await handleDeleteNode(msg);
     case 'delete-nodes':
@@ -111,6 +120,20 @@ export async function routeCommand(msg: Command): Promise<CommandResponse> {
       return await handleExportImage(msg);
     case 'batch-commands':
       return await handleBatchCommands(msg);
+    case 'read-text-formatting':
+      return await handleReadTextFormatting(msg);
+    case 'update-text-formatting':
+      return await handleUpdateTextFormatting(msg);
+    case 'reorder-children':
+      return await handleReorderChildren(msg);
+    case 'read-text-content':
+      return await handleReadTextContent(msg);
+    case 'find-all-colors':
+      return await handleFindAllColors(msg);
+    case 'replace-colors-batch':
+      return await handleReplaceColorsBatch(msg);
+    case 'replace-all-colors-global':
+      return await handleReplaceAllColors(msg);
     default:
       return {
         id: msg.id,

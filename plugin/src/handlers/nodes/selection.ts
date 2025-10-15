@@ -1,10 +1,32 @@
 import { Command, CommandResponse } from '../../types';
 import { serializeNode } from './helpers';
 
-// get-selection: Get currently selected nodes
+// Helper function to build hierarchy (same as in crud.ts)
+function buildHierarchy(node: SceneNode, depth: number): any {
+  const base: any = {
+    id: node.id,
+    name: node.name,
+    type: node.type
+  };
+
+  if (depth > 0 && 'children' in node) {
+    base.childIds = (node as FrameNode).children.map((c: SceneNode) => c.id);
+    if (depth > 1) {
+      base.children = (node as FrameNode).children.map((c: SceneNode) => buildHierarchy(c, depth - 1));
+    }
+  }
+
+  return base;
+}
+
+// get-selection: Get currently selected nodes with response modes
 export async function handleGetSelection(msg: Command): Promise<CommandResponse> {
   try {
-    const { maxDepth = 5 } = msg.payload || {};
+    const {
+      maxDepth = 5,
+      responseMode = 'full',
+      hierarchyDepth = 1
+    } = msg.payload || {};
 
     const selection = Array.from(figma.currentPage.selection);
 
@@ -20,15 +42,52 @@ export async function handleGetSelection(msg: Command): Promise<CommandResponse>
       };
     }
 
-    const serialized = selection.map((node) => serializeNode(node as SceneNode, 0, maxDepth));
+    // Enable performance optimization
+    figma.skipInvisibleInstanceChildren = true;
+
+    // Format response based on mode
+    let data: any;
+
+    switch (responseMode) {
+      case 'ids-only':
+        data = {
+          selection: selection.map(n => n.id),
+          count: selection.length
+        };
+        break;
+
+      case 'minimal':
+        data = {
+          selection: selection.map(n => ({
+            id: n.id,
+            name: n.name,
+            type: n.type,
+            childCount: 'children' in n ? (n as FrameNode).children.length : 0,
+            parent: n.parent?.id || null
+          })),
+          count: selection.length
+        };
+        break;
+
+      case 'hierarchy':
+        data = {
+          selection: selection.map(n => buildHierarchy(n as SceneNode, hierarchyDepth)),
+          count: selection.length
+        };
+        break;
+
+      default: // 'full'
+        const serialized = selection.map((node) => serializeNode(node as SceneNode, 0, maxDepth));
+        data = {
+          selection: serialized,
+          count: serialized.length
+        };
+    }
 
     return {
       id: msg.id,
       success: true,
-      data: {
-        selection: serialized,
-        count: serialized.length
-      }
+      data
     };
   } catch (error) {
     return { id: msg.id, success: false, error: String(error) };

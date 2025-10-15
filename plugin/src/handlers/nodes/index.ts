@@ -14,9 +14,12 @@ export {
 // Export all CRUD handlers
 export {
   handleReadNodes,
+  handleGetNodesByIds,
   handleDeleteNode,
   handleDeleteNodes,
-  handleUpdateNode
+  handleUpdateNode,
+  handleReadTextFormatting,
+  handleUpdateTextFormatting
 } from './crud';
 
 // Export selection handlers
@@ -24,3 +27,13 @@ export {
   handleGetSelection,
   handleSetSelection
 } from './selection';
+
+// Export reorder handlers
+export {
+  handleReorderChildren
+} from './reorder';
+
+// Export text reading handlers
+export {
+  handleReadTextContent
+} from './readText';

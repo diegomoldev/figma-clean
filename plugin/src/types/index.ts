@@ -11,6 +11,7 @@ export type CommandType =
   | 'sync-ellipse'
   | 'sync-group'
   | 'read-nodes'
+  | 'get-nodes-by-ids'
   | 'delete-node'
   | 'delete-nodes'
   | 'set-auto-layout'
@@ -38,7 +39,16 @@ export type CommandType =
   | 'create-image'
   | 'create-video'
   | 'export-image'
-  | 'batch-commands';
+  | 'batch-commands'
+  | 'read-text-formatting'
+  | 'update-text-formatting'
+  | 'reorder-children'
+  | 'read-text-content'
+  | 'find-all-colors'
+  | 'replace-colors-batch'
+  | 'replace-all-colors-global';
+
+export type ResponseMode = 'full' | 'ids-only' | 'minimal' | 'hierarchy';
 
 export interface Command {
   id: string;

@@ -68,42 +68,76 @@ export async function handleSyncVariables(msg: Command): Promise<CommandResponse
 }
 
 export async function handleReadVariables(msg: Command): Promise<CommandResponse> {
+  const { responseMode = 'full' } = msg.payload || {};
   const collections = figma.variables.getLocalVariableCollections();
-  const result: any[] = [];
 
-  for (const collection of collections) {
-    const variables = collection.variableIds
-      .map((id) => figma.variables.getVariableById(id))
-      .filter((v): v is Variable => v !== null);
+  let data: any;
 
-    const collectionData = {
-      name: collection.name,
-      modes: collection.modes.map((m) => ({ name: m.name })),
-      variables: variables.map((v) => {
-        const values: Record<string, any> = {};
-        for (const mode of collection.modes) {
-          const value = v.valuesByMode[mode.modeId];
-          values[mode.name] = value;
-        }
+  switch (responseMode) {
+    case 'ids-only':
+      data = {
+        collectionIds: collections.map(c => c.id),
+        collectionNames: collections.map(c => c.name),
+        count: collections.length,
+        totalVariables: collections.reduce((sum, c) => sum + c.variableIds.length, 0)
+      };
+      break;
 
-        return {
-          name: v.name,
-          type: v.resolvedType,
-          values,
-          description: v.description,
-          scopes: v.scopes,
-          hiddenFromPublishing: v.hiddenFromPublishing,
+    case 'minimal':
+      data = {
+        collections: collections.map(c => ({
+          id: c.id,
+          name: c.name,
+          modes: c.modes.map(m => m.name),
+          variableCount: c.variableIds.length
+        })),
+        count: collections.length
+      };
+      break;
+
+    case 'full':
+    default:
+      const result: any[] = [];
+
+      for (const collection of collections) {
+        const variables = collection.variableIds
+          .map((id) => figma.variables.getVariableById(id))
+          .filter((v): v is Variable => v !== null);
+
+        const collectionData = {
+          id: collection.id,
+          name: collection.name,
+          modes: collection.modes.map((m) => ({ name: m.name })),
+          variables: variables.map((v) => {
+            const values: Record<string, any> = {};
+            for (const mode of collection.modes) {
+              const value = v.valuesByMode[mode.modeId];
+              values[mode.name] = value;
+            }
+
+            return {
+              id: v.id,
+              name: v.name,
+              type: v.resolvedType,
+              values,
+              description: v.description,
+              scopes: v.scopes,
+              hiddenFromPublishing: v.hiddenFromPublishing,
+            };
+          }),
+          hiddenFromPublishing: collection.hiddenFromPublishing,
         };
-      }),
-      hiddenFromPublishing: collection.hiddenFromPublishing,
-    };
 
-    result.push(collectionData);
+        result.push(collectionData);
+      }
+
+      data = { collections: result, count: result.length };
+      break;
   }
 
   return {
     id: msg.id,
     success: true,
-    data: { collections: result },
+    data,
   };
 }

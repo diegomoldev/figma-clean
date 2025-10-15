@@ -1,0 +1,384 @@
+{
+  "commands": [
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1226;2525:10290",
+        "characters": "Design Systems Service"
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1226;2525:10291",
+        "characters": "Build scalable  design systems  with confidence"
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1226;2525:10292",
+        "characters": "Create consistent, maintainable design systems that scale across your entire product. We establish design foundations that empower teams to build faster and better.",
+        "characterFormatting": [
+          {
+            "start": 0,
+            "end": 88,
+            "fills": [{"type": "SOLID", "color": {"r": 0.058, "g": 0.058, "b": 0.172}, "opacity": 1}]
+          },
+          {
+            "start": 88,
+            "end": 195,
+            "fills": [{"type": "SOLID", "color": {"r": 0.058, "g": 0.058, "b": 0.172}, "opacity": 0.6}]
+          }
+        ]
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1227;2505:8835",
+        "characters": "Unified design language. When components are inconsistent or undocumented, teams waste time rebuilding what exists.",
+        "characterFormatting": [
+          {
+            "start": 0,
+            "end": 26,
+            "fills": [{"type": "SOLID", "color": {"r": 0.058, "g": 0.058, "b": 0.172}, "opacity": 1}]
+          },
+          {
+            "start": 26,
+            "end": 112,
+            "fills": [{"type": "SOLID", "color": {"r": 0.46, "g": 0.46, "b": 0.46}, "opacity": 1}]
+          }
+        ]
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1227;2505:8836",
+        "characters": "We help you establish design foundations, component libraries and documentation that work across all platforms. The result is faster development cycles and consistent user experiences."
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1228;2464:6486",
+        "characters": "Design tokens and components streamline product development."
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1229;2481:7558",
+        "characters": "Start with solid foundations. We establish design tokens, spacing scales and typography systems that create consistency from day one.",
+        "characterFormatting": [
+          {
+            "start": 0,
+            "end": 30,
+            "fills": [{"type": "SOLID", "color": {"r": 0.058, "g": 0.058, "b": 0.172}, "opacity": 1}]
+          },
+          {
+            "start": 30,
+            "end": 150,
+            "fills": [{"type": "SOLID", "color": {"r": 0.46, "g": 0.46, "b": 0.46}, "opacity": 1}]
+          }
+        ]
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1229;2481:7560;2472:7130",
+        "characters": "Tokens and variables"
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1229;2481:7560;2472:7131",
+        "characters": "Define colors, typography, spacing and effects as reusable tokens"
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1229;2481:7561;2472:7130",
+        "characters": "Component libraries"
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1229;2481:7561;2472:7131",
+        "characters": "Build reusable components with variants and states"
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1229;2481:7562;2472:7130",
+        "characters": "Documentation"
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1229;2481:7562;2472:7131",
+        "characters": "Create clear guidelines for designers and developers"
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1229;2481:7563;2472:7130",
+        "characters": "Accessible by default"
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1229;2481:7563;2472:7131",
+        "characters": "Build accessibility standards directly into your design foundation"
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1230;2481:7217",
+        "characters": "Scale design efficiently across teams. Well-structured design systems help teams work faster and maintain quality as your product grows.",
+        "characterFormatting": [
+          {
+            "start": 0,
+            "end": 38,
+            "fills": [{"type": "SOLID", "color": {"r": 0.058, "g": 0.058, "b": 0.172}, "opacity": 1}]
+          },
+          {
+            "start": 38,
+            "end": 167,
+            "fills": [{"type": "SOLID", "color": {"r": 0.46, "g": 0.46, "b": 0.46}, "opacity": 1}]
+          }
+        ]
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1230;2481:7449;2472:7130",
+        "characters": "Consistency"
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1230;2481:7449;2472:7131",
+        "characters": "Maintain visual and functional consistency across products"
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1230;2481:7457;2472:7130",
+        "characters": "Faster builds"
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1230;2481:7457;2472:7131",
+        "characters": "Reduce design and development time with reusable patterns"
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1230;2481:7479;2472:7130",
+        "characters": "Quality control"
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1230;2481:7479;2472:7131",
+        "characters": "Catch design inconsistencies before they ship"
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1230;2481:7487;2472:7130",
+        "characters": "Team scaling"
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1230;2481:7487;2472:7131",
+        "characters": "Onboard designers and developers faster with clear standards"
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1232;2443:2539",
+        "characters": "Foundations that scale  as your product  evolves."
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1233;2443:4716",
+        "characters": "Empower teams to build better products. The right design system makes collaboration seamless and helps your product feel cohesive.",
+        "characterFormatting": [
+          {
+            "start": 0,
+            "end": 40,
+            "fills": [{"type": "SOLID", "color": {"r": 0.058, "g": 0.058, "b": 0.172}, "opacity": 1}]
+          },
+          {
+            "start": 40,
+            "end": 142,
+            "fills": [{"type": "SOLID", "color": {"r": 0.46, "g": 0.46, "b": 0.46}, "opacity": 1}]
+          }
+        ]
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1233;2443:4668;2404:3503;2403:734",
+        "characters": "Design to code"
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1233;2443:4668;2404:3503;2403:736",
+        "characters": "Generate tokens and components that work with your codebase"
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1233;2443:4696;2404:3503;2403:734",
+        "characters": "Figma setup"
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1233;2443:4696;2404:3503;2403:736",
+        "characters": "Structure libraries with variables, styles and components"
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1233;2443:4702;2404:3503;2403:734",
+        "characters": "Version control"
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1233;2443:4702;2404:3503;2403:736",
+        "characters": "Manage changes and updates across design and development teams"
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1233;2443:4708;2404:3503;2403:734",
+        "characters": "Support & growth"
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1233;2443:4708;2404:3503;2403:736",
+        "characters": "Ongoing support to evolve your design system with your product"
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1234;2505:11112",
+        "characters": "Reduce complexity and maintain quality. Too many design patterns create confusion and slow teams down.",
+        "characterFormatting": [
+          {
+            "start": 0,
+            "end": 37,
+            "fills": [{"type": "SOLID", "color": {"r": 0.058, "g": 0.058, "b": 0.172}, "opacity": 1}]
+          },
+          {
+            "start": 37,
+            "end": 114,
+            "fills": [{"type": "SOLID", "color": {"r": 0.46, "g": 0.46, "b": 0.46}, "opacity": 1}]
+          }
+        ]
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1234;2481:7718;2403:734",
+        "characters": "Single source"
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1234;2481:7718;2403:736",
+        "characters": "One design system serving all platforms and products"
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1234;2481:7719;2403:734",
+        "characters": "Remove duplication"
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1234;2481:7719;2403:736",
+        "characters": "Consolidate redundant components into unified patterns"
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1234;2481:7721;2403:734",
+        "characters": "Easy adoption"
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1234;2481:7721;2403:736",
+        "characters": "Clear migration paths and straightforward integration"
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1234;2481:7722;2403:734",
+        "characters": "Governance framework"
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1234;2481:7722;2403:736",
+        "characters": "Define contribution guidelines and approval workflows"
+      }
+    },
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1235;2525:5362",
+        "characters": "Let's build your design system  that grows with your vision."
+      }
+    }
+  ]
+}

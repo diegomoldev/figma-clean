@@ -14,6 +14,82 @@ export async function loadTextFonts(textNode: TextNode): Promise<void> {
   await Promise.all(fontNames.map(figma.loadFontAsync));
 }
 
+// Extract character-level formatting from text node
+export function extractCharacterFormatting(textNode: TextNode): any[] {
+  const chars = textNode.characters;
+  const formatting: any[] = [];
+
+  let currentFormat: any = null;
+  let startIndex = 0;
+
+  for (let i = 0; i <= chars.length; i++) {
+    const fills = i < chars.length ? textNode.getRangeFills(i, i + 1) : null;
+    const fontSize = i < chars.length ? textNode.getRangeFontSize(i, i + 1) : null;
+    const fontName = i < chars.length ? textNode.getRangeFontName(i, i + 1) : null;
+    const fillColor = i < chars.length ? textNode.getRangeFillStyleId(i, i + 1) : null;
+
+    const format = {
+      fills: fills !== figma.mixed ? fills : 'mixed',
+      fontSize: fontSize !== figma.mixed ? fontSize : 'mixed',
+      fontName: fontName !== figma.mixed ? fontName : 'mixed'
+    };
+
+    const formatKey = JSON.stringify(format);
+    const currentKey = currentFormat ? JSON.stringify(currentFormat) : null;
+
+    // When format changes or we reach the end
+    if (formatKey !== currentKey) {
+      if (currentFormat) {
+        formatting.push({
+          start: startIndex,
+          end: i,
+          text: chars.substring(startIndex, i),
+          ...currentFormat
+        });
+      }
+      currentFormat = format;
+      startIndex = i;
+    }
+  }
+
+  return formatting;
+}
+
+// Apply character-level formatting to text node
+export async function applyCharacterFormatting(textNode: TextNode, formatting: any[]): Promise<void> {
+  // Load all required fonts first
+  await loadTextFonts(textNode);
+
+  const uniqueFonts = new Set<string>();
+  for (const range of formatting) {
+    if (range.fontName && range.fontName !== 'mixed') {
+      uniqueFonts.add(JSON.stringify(range.fontName));
+    }
+  }
+
+  for (const fontStr of uniqueFonts) {
+    const font = JSON.parse(fontStr);
+    await figma.loadFontAsync(font as FontName);
+  }
+
+  // Apply formatting to each range
+  for (const range of formatting) {
+    const { start, end, fills, fontSize, fontName } = range;
+
+    if (fills && fills !== 'mixed') {
+      textNode.setRangeFills(start, end, fills as Paint[]);
+    }
+
+    if (fontSize && fontSize !== 'mixed') {
+      textNode.setRangeFontSize(start, end, fontSize as number);
+    }
+
+    if (fontName && fontName !== 'mixed') {
+      textNode.setRangeFontName(start, end, fontName as FontName);
+    }
+  }
+}
+
 // Helper function to apply common properties to nodes
 export function applyCommonProperties(node: SceneNode, props: any): void {
   if (props.name !== undefined) node.name = props.name;
@@ -272,6 +348,11 @@ export function serializeNode(node: SceneNode, depth: number, maxDepth: number):
       base.letterSpacing = 'mixed';
     } else {
       base.letterSpacing = text.letterSpacing;
+    }
+
+    // Read character-level formatting for mixed properties
+    if (text.fills as any === figma.mixed || text.fontSize as any === figma.mixed || text.fontName as any === figma.mixed) {
+      base.characterFormatting = extractCharacterFormatting(text);
     }
   }
 

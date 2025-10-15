@@ -1,0 +1,310 @@
+{
+  "page": {
+    "name": "Material 3 Typography",
+    "frame": {
+      "name": "Typography Documentation",
+      "width": 1440,
+      "height": 3000,
+      "x": 0,
+      "y": 0,
+      "fills": [{"type": "SOLID", "color": {"r": 0.99, "g": 0.99, "b": 0.99}}],
+      "layoutMode": "VERTICAL",
+      "paddingLeft": 80,
+      "paddingRight": 80,
+      "paddingTop": 80,
+      "paddingBottom": 80,
+      "itemSpacing": 64,
+      "primaryAxisSizingMode": "AUTO",
+      "counterAxisSizingMode": "FIXED",
+      "children": [
+        {
+          "type": "text",
+          "name": "Page Title",
+          "characters": "Material Design 3 Typography",
+          "fontSize": 57,
+          "fontName": {"family": "Biennale", "style": "SemiBold"},
+          "fills": [{"type": "SOLID", "color": {"r": 0.11, "g": 0.11, "b": 0.12}}],
+          "width": 1280,
+          "textAutoResize": "HEIGHT"
+        },
+        {
+          "type": "text",
+          "name": "Description",
+          "characters": "The Material Design 3 type scale includes five categories: Display, Headline, Title, Body, and Label. Each category has Large, Medium, and Small sizes, creating 15 distinct type styles.",
+          "fontSize": 16,
+          "fontName": {"family": "Biennale", "style": "Regular"},
+          "fills": [{"type": "SOLID", "color": {"r": 0.40, "g": 0.39, "b": 0.42}}],
+          "width": 1280,
+          "textAutoResize": "HEIGHT",
+          "lineHeight": {"unit": "PERCENT", "value": 150}
+        },
+        {
+          "type": "frame",
+          "name": "Display Styles",
+          "width": 1280,
+          "fills": [],
+          "layoutMode": "VERTICAL",
+          "itemSpacing": 32,
+          "primaryAxisSizingMode": "AUTO",
+          "counterAxisSizingMode": "FIXED",
+          "children": [
+            {
+              "type": "text",
+              "name": "Section Title",
+              "characters": "Display",
+              "fontSize": 28,
+              "fontName": {"family": "Biennale", "style": "Medium"},
+              "fills": [{"type": "SOLID", "color": {"r": 0.11, "g": 0.11, "b": 0.12}}],
+              "width": 1280,
+              "textAutoResize": "HEIGHT"
+            },
+            {
+              "type": "frame",
+              "name": "Display Large",
+              "width": 1280,
+              "fills": [{"type": "SOLID", "color": {"r": 1, "g": 1, "b": 1}}],
+              "layoutMode": "VERTICAL",
+              "itemSpacing": 8,
+              "paddingLeft": 24,
+              "paddingRight": 24,
+              "paddingTop": 24,
+              "paddingBottom": 24,
+              "cornerRadius": 12,
+              "primaryAxisSizingMode": "AUTO",
+              "counterAxisSizingMode": "FIXED",
+              "children": [
+                {
+                  "type": "text",
+                  "name": "Label",
+                  "characters": "Display Large • 57px • Regular",
+                  "fontSize": 12,
+                  "fontName": {"family": "Biennale", "style": "Medium"},
+                  "fills": [{"type": "SOLID", "color": {"r": 0.51, "g": 0.50, "b": 0.54}}],
+                  "width": 1232,
+                  "textAutoResize": "HEIGHT"
+                },
+                {
+                  "type": "text",
+                  "name": "Display Large Sample",
+                  "characters": "The quick brown fox",
+                  "fontSize": 57,
+                  "fontName": {"family": "Biennale", "style": "Regular"},
+                  "fills": [{"type": "SOLID", "color": {"r": 0.11, "g": 0.11, "b": 0.12}}],
+                  "width": 1232,
+                  "textAutoResize": "HEIGHT"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "name": "Display Medium",
+              "width": 1280,
+              "fills": [{"type": "SOLID", "color": {"r": 1, "g": 1, "b": 1}}],
+              "layoutMode": "VERTICAL",
+              "itemSpacing": 8,
+              "paddingLeft": 24,
+              "paddingRight": 24,
+              "paddingTop": 24,
+              "paddingBottom": 24,
+              "cornerRadius": 12,
+              "primaryAxisSizingMode": "AUTO",
+              "counterAxisSizingMode": "FIXED",
+              "children": [
+                {
+                  "type": "text",
+                  "name": "Label",
+                  "characters": "Display Medium • 45px • Regular",
+                  "fontSize": 12,
+                  "fontName": {"family": "Biennale", "style": "Medium"},
+                  "fills": [{"type": "SOLID", "color": {"r": 0.51, "g": 0.50, "b": 0.54}}],
+                  "width": 1232,
+                  "textAutoResize": "HEIGHT"
+                },
+                {
+                  "type": "text",
+                  "name": "Display Medium Sample",
+                  "characters": "The quick brown fox jumps",
+                  "fontSize": 45,
+                  "fontName": {"family": "Biennale", "style": "Regular"},
+                  "fills": [{"type": "SOLID", "color": {"r": 0.11, "g": 0.11, "b": 0.12}}],
+                  "width": 1232,
+                  "textAutoResize": "HEIGHT"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "name": "Display Small",
+              "width": 1280,
+              "fills": [{"type": "SOLID", "color": {"r": 1, "g": 1, "b": 1}}],
+              "layoutMode": "VERTICAL",
+              "itemSpacing": 8,
+              "paddingLeft": 24,
+              "paddingRight": 24,
+              "paddingTop": 24,
+              "paddingBottom": 24,
+              "cornerRadius": 12,
+              "primaryAxisSizingMode": "AUTO",
+              "counterAxisSizingMode": "FIXED",
+              "children": [
+                {
+                  "type": "text",
+                  "name": "Label",
+                  "characters": "Display Small • 36px • Regular",
+                  "fontSize": 12,
+                  "fontName": {"family": "Biennale", "style": "Medium"},
+                  "fills": [{"type": "SOLID", "color": {"r": 0.51, "g": 0.50, "b": 0.54}}],
+                  "width": 1232,
+                  "textAutoResize": "HEIGHT"
+                },
+                {
+                  "type": "text",
+                  "name": "Display Small Sample",
+                  "characters": "The quick brown fox jumps over",
+                  "fontSize": 36,
+                  "fontName": {"family": "Biennale", "style": "Regular"},
+                  "fills": [{"type": "SOLID", "color": {"r": 0.11, "g": 0.11, "b": 0.12}}],
+                  "width": 1232,
+                  "textAutoResize": "HEIGHT"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "name": "Headline Styles",
+          "width": 1280,
+          "fills": [],
+          "layoutMode": "VERTICAL",
+          "itemSpacing": 32,
+          "primaryAxisSizingMode": "AUTO",
+          "counterAxisSizingMode": "FIXED",
+          "children": [
+            {
+              "type": "text",
+              "name": "Section Title",
+              "characters": "Headline",
+              "fontSize": 28,
+              "fontName": {"family": "Biennale", "style": "Medium"},
+              "fills": [{"type": "SOLID", "color": {"r": 0.11, "g": 0.11, "b": 0.12}}],
+              "width": 1280,
+              "textAutoResize": "HEIGHT"
+            },
+            {
+              "type": "frame",
+              "name": "Headline Large",
+              "width": 1280,
+              "fills": [{"type": "SOLID", "color": {"r": 1, "g": 1, "b": 1}}],
+              "layoutMode": "VERTICAL",
+              "itemSpacing": 8,
+              "paddingLeft": 24,
+              "paddingRight": 24,
+              "paddingTop": 24,
+              "paddingBottom": 24,
+              "cornerRadius": 12,
+              "primaryAxisSizingMode": "AUTO",
+              "counterAxisSizingMode": "FIXED",
+              "children": [
+                {
+                  "type": "text",
+                  "name": "Label",
+                  "characters": "Headline Large • 32px • Regular",
+                  "fontSize": 12,
+                  "fontName": {"family": "Biennale", "style": "Medium"},
+                  "fills": [{"type": "SOLID", "color": {"r": 0.51, "g": 0.50, "b": 0.54}}],
+                  "width": 1232,
+                  "textAutoResize": "HEIGHT"
+                },
+                {
+                  "type": "text",
+                  "name": "Headline Large Sample",
+                  "characters": "The quick brown fox jumps over the lazy dog",
+                  "fontSize": 32,
+                  "fontName": {"family": "Biennale", "style": "Regular"},
+                  "fills": [{"type": "SOLID", "color": {"r": 0.11, "g": 0.11, "b": 0.12}}],
+                  "width": 1232,
+                  "textAutoResize": "HEIGHT"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "name": "Headline Medium",
+              "width": 1280,
+              "fills": [{"type": "SOLID", "color": {"r": 1, "g": 1, "b": 1}}],
+              "layoutMode": "VERTICAL",
+              "itemSpacing": 8,
+              "paddingLeft": 24,
+              "paddingRight": 24,
+              "paddingTop": 24,
+              "paddingBottom": 24,
+              "cornerRadius": 12,
+              "primaryAxisSizingMode": "AUTO",
+              "counterAxisSizingMode": "FIXED",
+              "children": [
+                {
+                  "type": "text",
+                  "name": "Label",
+                  "characters": "Headline Medium • 28px • Regular",
+                  "fontSize": 12,
+                  "fontName": {"family": "Biennale", "style": "Medium"},
+                  "fills": [{"type": "SOLID", "color": {"r": 0.51, "g": 0.50, "b": 0.54}}],
+                  "width": 1232,
+                  "textAutoResize": "HEIGHT"
+                },
+                {
+                  "type": "text",
+                  "name": "Headline Medium Sample",
+                  "characters": "The quick brown fox jumps over the lazy dog",
+                  "fontSize": 28,
+                  "fontName": {"family": "Biennale", "style": "Regular"},
+                  "fills": [{"type": "SOLID", "color": {"r": 0.11, "g": 0.11, "b": 0.12}}],
+                  "width": 1232,
+                  "textAutoResize": "HEIGHT"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "name": "Headline Small",
+              "width": 1280,
+              "fills": [{"type": "SOLID", "color": {"r": 1, "g": 1, "b": 1}}],
+              "layoutMode": "VERTICAL",
+              "itemSpacing": 8,
+              "paddingLeft": 24,
+              "paddingRight": 24,
+              "paddingTop": 24,
+              "paddingBottom": 24,
+              "cornerRadius": 12,
+              "primaryAxisSizingMode": "AUTO",
+              "counterAxisSizingMode": "FIXED",
+              "children": [
+                {
+                  "type": "text",
+                  "name": "Label",
+                  "characters": "Headline Small • 24px • Regular",
+                  "fontSize": 12,
+                  "fontName": {"family": "Biennale", "style": "Medium"},
+                  "fills": [{"type": "SOLID", "color": {"r": 0.51, "g": 0.50, "b": 0.54}}],
+                  "width": 1232,
+                  "textAutoResize": "HEIGHT"
+                },
+                {
+                  "type": "text",
+                  "name": "Headline Small Sample",
+                  "characters": "The quick brown fox jumps over the lazy dog",
+                  "fontSize": 24,
+                  "fontName": {"family": "Biennale", "style": "Regular"},
+                  "fills": [{"type": "SOLID", "color": {"r": 0.11, "g": 0.11, "b": 0.12}}],
+                  "width": 1232,
+                  "textAutoResize": "HEIGHT"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

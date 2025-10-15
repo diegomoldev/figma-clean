@@ -450,7 +450,581 @@ When creating new node types or modifying existing ones, verify:
 
 ---
 
+## Duotone Text Formatting
+
+### Mixed-Color Text (Duotone Titles)
+
+Many design systems use duotone text where the first sentence is dark and the rest is gray/lighter color. This creates visual hierarchy in section titles and hero descriptions.
+
+### Critical: Accurate Character Counting
+
+**Problem**: Manually counting characters to determine split points leads to errors:
+- Mid-word splits
+- Incorrect color boundaries
+- Three or more color segments instead of two
+
+**Solution**: ALWAYS calculate split position programmatically using `text.find('.') + 1`
+
+### Correct Approach
+
+```python
+# Calculate exact split position
+text = "Scale performance, not just process. Real productivity gains come from alignment."
+first_period_pos = text.find('.') + 1  # Returns 36 (includes the period)
+total_length = len(text)  # Returns 81
+
+# Now apply formatting
+characterFormatting = [
+    {
+        "start": 0,
+        "end": first_period_pos,  # 36
+        "fills": [{"type": "SOLID", "color": {"r": 0.105, "g": 0.105, "b": 0.105}}],  # Dark
+        "fontSize": 24,
+        "fontName": {"family": "Biennale", "style": "Medium"}
+    },
+    {
+        "start": first_period_pos,  # 36
+        "end": total_length,  # 81
+        "fills": [{"type": "SOLID", "color": {"r": 0.651, "g": 0.651, "b": 0.651}}],  # Gray
+        "fontSize": 24,
+        "fontName": {"family": "Biennale", "style": "Medium"}
+    }
+]
+```
+
+### Common Duotone Patterns
+
+**Section Titles (24-30px):**
+- First sentence (ending with period): Dark color (#1B1B1B or rgb(0.105, 0.105, 0.105))
+- Rest of text: Gray color (#A6A6A6 or rgb(0.651, 0.651, 0.651))
+
+**Hero Taglines (21px):**
+- First sentence: Dark
+- Supporting text: Gray
+
+**Large Headers (38px):**
+- Question or statement: Dark
+- Follow-up explanation: Gray
+
+### Debugging Duotone Issues
+
+When duotone text looks wrong:
+
+1. **Check character formatting in read-nodes response:**
+   ```bash
+   curl -X POST http://localhost:3001/api/read-text-content -d '{"nodeId":"..."}'
+   ```
+
+2. **Look for these signs of errors:**
+   - More than 2 formatting segments (should only be 2 for duotone)
+   - Split point doesn't match where first sentence ends
+   - Words are split across color boundaries
+
+3. **Recalculate using Python:**
+   ```bash
+   python -c "text = 'Your text here.'; print(text.find('.') + 1, len(text))"
+   ```
+
+4. **Update with exact positions**
+
+### Special Characters
+
+Watch out for special characters that may affect character counting:
+- Smart quotes (' ' " ") vs straight quotes (' ")
+- Em dash (—) vs hyphen (-)
+- Non-breaking spaces
+- Unicode characters
+
+Always get the text directly from Figma using `read-text-content` command, then calculate split position on that exact text.
+
+### Best Practice Workflow
+
+1. **Read the actual text from Figma:**
+   ```bash
+   curl -X POST http://localhost:3001/api/read-text-content -d '{"nodeId":"6:3211"}'
+   ```
+
+2. **Extract text and calculate split:**
+   ```python
+   text = "Communication that connects at the right time. Modern workforces are mobile..."
+   split = text.find('.') + 1  # Includes the period
+   total = len(text)
+   ```
+
+3. **Apply formatting with exact positions:**
+   ```bash
+   curl -X POST http://localhost:3001/api/update-node -d '{
+     "nodeId": "...",
+     "characterFormatting": [
+       {"start": 0, "end": split, "fills": [dark_color], ...},
+       {"start": split, "end": total, "fills": [gray_color], ...}
+     ]
+   }'
+   ```
+
+4. **Verify split is correct:**
+   - First segment should end with the period
+   - No mid-word splits
+   - Exactly 2 segments
+
+---
+
+## Layer Ordering in Figma
+
+### Critical: Figma's Inverted Layer Stack
+
+**Figma's layer panel displays layers in reverse order from their index:**
+- Index 0 = **BOTTOM** of layers panel (back in z-order)
+- Last index = **TOP** of layers panel (front in z-order)
+
+This is the opposite of what you might expect!
+
+### Reordering by Y Position
+
+When reordering children based on their Y position (top to bottom on canvas), you must **REVERSE** the sorted array:
+
+```typescript
+// Sort by Y position (top to bottom on canvas)
+const sorted = children.sort((a, b) => a.y - b.y);
+
+// REVERSE because Figma's layer panel is inverted
+sorted.reverse();
+
+// Now reinsert: index 0 gets highest Y (bottom of canvas, bottom of panel)
+// Last index gets lowest Y (top of canvas, top of panel)
+for (let i = 0; i < sorted.length; i++) {
+  parent.insertChild(i, sorted[i]);
+}
+```
+
+### Implemented Command
+
+The `reorder-children` command handles this correctly:
+
+```bash
+curl -X POST http://localhost:3001/api/reorder-children \
+  -H "Content-Type: application/json" \
+  -d '{"nodeId":"6:3211","orderBy":"y"}'
+```
+
+This will:
+1. Find all children of the node
+2. Sort by Y position (low Y = top of canvas)
+3. **Reverse the array**
+4. Reinsert so layer panel matches canvas order (top to bottom)
+
+---
+
+## Content Management Best Practices
+
+### Systematic Content Checking
+
+When verifying or fixing content across multiple pages:
+
+1. **Use read-text-content for overview:**
+   ```bash
+   curl -X POST http://localhost:3001/api/read-text-content \
+     -d '{"nodeId":"page-id"}'
+   ```
+
+   Returns: All text sorted by Y position with fontSize, hasMixedFills, and character count
+
+2. **Check one page at a time** - Don't try to fix all pages at once
+
+3. **Focus on key text sizes:**
+   - 70px = Hero titles
+   - 38px = Large section headers
+   - 30px = Medium section titles
+   - 24px = Duotone section titles
+   - 21px = Hero taglines / descriptions
+   - 18px = Bullet titles (keep under 18 characters)
+
+4. **Verify duotone text:**
+   - All should have `hasMixedFills: true`
+   - Check split position programmatically
+
+5. **Update context.md** with learnings
+
+### Page Naming Convention
+
+Keep frame names synchronized with content:
+- SOLUTION-01 Comms = Communications & Engagement
+- SOLUTION-02 Productivity = Productivity & Performance
+- SOLUTION-03 Operations = Operations & Safety
+- SOLUTION-04 HR-IT = HR & IT Self-Service
+
+### Bullet Title Length Rules
+
+Section bullet titles should be **under 18 characters** for consistent layout:
+
+Good examples:
+- "Target comms" (12 chars)
+- "Priority updates" (16 chars)
+- "Track reach" (11 chars)
+- "Visibility" (10 chars)
+
+Too long:
+- "Eliminate redundancy" (20 chars) ❌
+- "Policies and resources" (22 chars) ❌
+
+---
+
+## API Endpoints Reference
+
+### Base URL
+- HTTP API: `http://localhost:3001/api`
+- WebSocket: `ws://localhost:3000`
+
+### Endpoint Format
+All endpoints accept POST requests with JSON payloads:
+```bash
+curl -X POST http://localhost:3001/api/{command-type} \
+  -H "Content-Type: application/json" \
+  -d '{"payload": "here"}'
+```
+
+### Variables & Collections
+
+**sync-variables** - Create or update variable collections
+```bash
+curl -X POST http://localhost:3001/api/sync-variables \
+  -d '{"collection":{"name":"Colors","modes":[{"name":"default"}],"variables":[{"name":"primary","type":"COLOR","values":{"default":{"r":1,"g":0,"b":0}}}]}}'
+```
+
+**read-variables** - Read all variable collections
+```bash
+curl -X POST http://localhost:3001/api/read-variables -d "{}"
+```
+
+**delete-collection** - Delete a single collection
+```bash
+curl -X POST http://localhost:3001/api/delete-collection -d '{"name":"Colors"}'
+```
+
+**delete-all-collections** - Delete all collections
+```bash
+curl -X POST http://localhost:3001/api/delete-all-collections -d "{}"
+```
+
+### Styles
+
+**sync-styles** - Create or update paint/text/effect/grid styles
+```bash
+curl -X POST http://localhost:3001/api/sync-styles \
+  -d '{"styles":[{"name":"Primary","type":"PAINT","paints":[{"type":"SOLID","color":{"r":1,"g":0,"b":0}}]}]}'
+```
+
+**read-styles** - Read all styles
+```bash
+curl -X POST http://localhost:3001/api/read-styles -d "{}"
+```
+
+### Nodes - Sync (Create/Update)
+
+**sync-frame** - Create or update frame
+```bash
+curl -X POST http://localhost:3001/api/sync-frame \
+  -d '{"name":"Container","x":0,"y":0,"width":1440,"height":900,"fills":[{"type":"SOLID","color":{"r":1,"g":1,"b":1}}]}'
+```
+
+**sync-rectangle** - Create or update rectangle
+```bash
+curl -X POST http://localhost:3001/api/sync-rectangle \
+  -d '{"name":"Box","x":0,"y":0,"width":100,"height":100,"fills":[{"type":"SOLID","color":{"r":1,"g":0,"b":0}}]}'
+```
+
+**sync-text** - Create or update text node
+```bash
+curl -X POST http://localhost:3001/api/sync-text \
+  -d '{"name":"Title","x":0,"y":0,"characters":"Hello World","fontSize":24,"fontName":{"family":"Inter","style":"Regular"}}'
+```
+
+**sync-ellipse** - Create or update ellipse
+```bash
+curl -X POST http://localhost:3001/api/sync-ellipse \
+  -d '{"name":"Circle","x":0,"y":0,"width":100,"height":100}'
+```
+
+**sync-group** - Create or update group
+```bash
+curl -X POST http://localhost:3001/api/sync-group \
+  -d '{"name":"MyGroup","children":[...]}'
+```
+
+### Nodes - Read
+
+**read-nodes** - Read nodes with filters
+```bash
+# Read all nodes
+curl -X POST http://localhost:3001/api/read-nodes -d "{}"
+
+# Filter by type
+curl -X POST http://localhost:3001/api/read-nodes -d '{"filters":{"type":"TEXT"}}'
+
+# Filter by name
+curl -X POST http://localhost:3001/api/read-nodes -d '{"filters":{"name":"Title"}}'
+
+# Filter by parent
+curl -X POST http://localhost:3001/api/read-nodes -d '{"filters":{"parentId":"123:456"}}'
+
+# Filter by specific node IDs
+curl -X POST http://localhost:3001/api/read-nodes -d '{"filters":{"nodeIds":["123:456","123:457"]}}'
+```
+
+**get-nodes-by-ids** - Get specific nodes by their IDs
+```bash
+curl -X POST http://localhost:3001/api/get-nodes-by-ids \
+  -d '{"nodeIds":["123:456","123:457"]}'
+```
+
+**read-text-content** - Read all text content from a page/frame (sorted by Y position)
+```bash
+curl -X POST http://localhost:3001/api/read-text-content \
+  -d '{"nodeId":"6:3211"}'
+```
+
+**read-text-formatting** - Read text node with character formatting details
+```bash
+curl -X POST http://localhost:3001/api/read-text-formatting \
+  -d '{"nodeId":"123:456"}'
+```
+
+### Nodes - Update
+
+**update-node** - Update existing node properties
+```bash
+# Update text
+curl -X POST http://localhost:3001/api/update-node \
+  -d '{"nodeId":"123:456","characters":"New text","fontSize":20}'
+
+# Update fills
+curl -X POST http://localhost:3001/api/update-node \
+  -d '{"nodeId":"123:456","fills":[{"type":"SOLID","color":{"r":1,"g":0,"b":0}}]}'
+
+# Update with character formatting (duotone text)
+curl -X POST http://localhost:3001/api/update-node \
+  -d '{"nodeId":"123:456","characters":"First sentence. Rest of text.","characterFormatting":[{"start":0,"end":15,"fills":[{"type":"SOLID","color":{"r":0.105,"g":0.105,"b":0.105}}]},{"start":15,"end":31,"fills":[{"type":"SOLID","color":{"r":0.651,"g":0.651,"b":0.651}}]}]}'
+
+# Move node to new parent
+curl -X POST http://localhost:3001/api/update-node \
+  -d '{"nodeId":"123:456","parentId":"123:789"}'
+```
+
+**update-text-formatting** - Update text formatting (simplified interface)
+```bash
+curl -X POST http://localhost:3001/api/update-text-formatting \
+  -d '{"nodeId":"123:456","characterFormatting":[...]}'
+```
+
+**reorder-children** - Reorder children by Y position
+```bash
+curl -X POST http://localhost:3001/api/reorder-children \
+  -d '{"nodeId":"123:456","orderBy":"y"}'
+```
+
+### Nodes - Delete
+
+**delete-node** - Delete single node
+```bash
+curl -X POST http://localhost:3001/api/delete-node \
+  -d '{"nodeId":"123:456"}'
+```
+
+**delete-nodes** - Delete multiple nodes with filters
+```bash
+# Delete by type
+curl -X POST http://localhost:3001/api/delete-nodes \
+  -d '{"filters":{"type":"RECTANGLE"}}'
+
+# Delete by name pattern
+curl -X POST http://localhost:3001/api/delete-nodes \
+  -d '{"filters":{"name":"test"}}'
+```
+
+### Selection
+
+**get-selection** - Get currently selected nodes
+```bash
+curl -X POST http://localhost:3001/api/get-selection -d "{}"
+```
+
+**set-selection** - Set selection by node IDs
+```bash
+curl -X POST http://localhost:3001/api/set-selection \
+  -d '{"nodeIds":["123:456","123:457"]}'
+```
+
+### Properties
+
+**set-auto-layout** - Apply auto-layout to frame
+```bash
+curl -X POST http://localhost:3001/api/set-auto-layout \
+  -d '{"nodeId":"123:456","layoutMode":"VERTICAL","paddingLeft":24,"paddingRight":24,"paddingTop":24,"paddingBottom":24,"itemSpacing":16}'
+```
+
+**set-fills** - Update node fills
+```bash
+curl -X POST http://localhost:3001/api/set-fills \
+  -d '{"nodeId":"123:456","fills":[{"type":"SOLID","color":{"r":1,"g":0,"b":0}}]}'
+```
+
+**set-effects** - Update node effects
+```bash
+curl -X POST http://localhost:3001/api/set-effects \
+  -d '{"nodeId":"123:456","effects":[{"type":"DROP_SHADOW","color":{"r":0,"g":0,"b":0,"a":0.25},"offset":{"x":0,"y":4},"radius":8}]}'
+```
+
+**set-constraints** - Update node constraints
+```bash
+curl -X POST http://localhost:3001/api/set-constraints \
+  -d '{"nodeId":"123:456","constraints":{"horizontal":"CENTER","vertical":"CENTER"}}'
+```
+
+### Components
+
+**sync-component** - Create or update component
+```bash
+curl -X POST http://localhost:3001/api/sync-component \
+  -d '{"name":"Button","width":120,"height":40}'
+```
+
+**sync-instance** - Create component instance
+```bash
+curl -X POST http://localhost:3001/api/sync-instance \
+  -d '{"componentId":"123:456","x":0,"y":0}'
+```
+
+**read-components** - Read all local components
+```bash
+curl -X POST http://localhost:3001/api/read-components -d "{}"
+```
+
+### Pages
+
+**sync-page** - Create or update page
+```bash
+curl -X POST http://localhost:3001/api/sync-page \
+  -d '{"name":"Design System"}'
+```
+
+**read-pages** - Read all pages
+```bash
+curl -X POST http://localhost:3001/api/read-pages -d "{}"
+```
+
+**set-current-page** - Switch to specific page
+```bash
+curl -X POST http://localhost:3001/api/set-current-page \
+  -d '{"name":"Design System"}'
+```
+
+**delete-page** - Delete a page
+```bash
+curl -X POST http://localhost:3001/api/delete-page \
+  -d '{"name":"Old Page"}'
+```
+
+**clone-page** - Clone a page
+```bash
+curl -X POST http://localhost:3001/api/clone-page \
+  -d '{"sourceName":"Template","newName":"New Page"}'
+```
+
+### Templates
+
+**create-page-structure** - Create full page from JSON
+```bash
+curl -X POST http://localhost:3001/api/create-page-structure \
+  -d '{"structure":{...}}'
+```
+
+**create-button** - Create pre-configured button
+```bash
+curl -X POST http://localhost:3001/api/create-button \
+  -d '{"label":"Click Me","x":0,"y":0}'
+```
+
+**create-card** - Create pre-configured card
+```bash
+curl -X POST http://localhost:3001/api/create-card \
+  -d '{"title":"Card Title","description":"Description text","x":0,"y":0}'
+```
+
+### Export
+
+**export-image** - Export nodes as images
+```bash
+curl -X POST http://localhost:3001/api/export-image \
+  -d '{"nodeId":"123:456","format":"PNG","scale":2}'
+```
+
+### Color Management
+
+**find-all-colors** - Scan and catalog all colors in selection
+```bash
+curl -X POST http://localhost:3001/api/find-all-colors \
+  -d '{"nodeIds":["123:456","123:457"]}'
+```
+
+**replace-colors-batch** - Replace colors with variable references
+```bash
+# Auto-map to closest greys
+curl -X POST http://localhost:3001/api/replace-colors-batch \
+  -d '{"autoMapToGreys":true,"collectionName":"Swatch","greyPrefix":"grey-","replacements":[{"nodeId":"123:456","property":"fills","index":0,"color":{"r":0.68,"g":0.68,"b":0.68}}]}'
+
+# Specify variable by name
+curl -X POST http://localhost:3001/api/replace-colors-batch \
+  -d '{"collectionName":"Swatch","replacements":[{"nodeId":"123:456","property":"fills","index":0,"variableName":"grey-500"}]}'
+
+# Specify variable by ID
+curl -X POST http://localhost:3001/api/replace-colors-batch \
+  -d '{"replacements":[{"nodeId":"123:456","property":"fills","index":0,"variableId":"VariableID:123:789"}]}'
+```
+
+**replace-all-colors-global** - Replace all instances of a color globally
+```bash
+curl -X POST http://localhost:3001/api/replace-all-colors-global \
+  -d '{"sourceColor":{"r":0.68,"g":0.68,"b":0.68},"variableId":"VariableID:123:789","collectionName":"Swatch"}'
+```
+
+### Batch Operations
+
+**batch-commands** - Execute multiple commands sequentially
+```bash
+curl -X POST http://localhost:3001/api/batch-commands \
+  -d '{"commands":[{"type":"update-node","payload":{"nodeId":"123:456","characters":"Text 1"}},{"type":"update-node","payload":{"nodeId":"123:457","characters":"Text 2"}}]}'
+```
+
+### Utility
+
+**status** - Check server status
+```bash
+curl http://localhost:3001/api/status
+```
+
+Returns:
+```json
+{
+  "connected": true,
+  "pendingCommands": 0
+}
+```
+
+---
+
 ## Version History
+
+- **2025-10-15**: Added comprehensive API endpoints reference
+  - Complete list of all 36+ available endpoints
+  - Example curl commands for each endpoint
+  - Organized by category (Variables, Nodes, Colors, etc.)
+
+- **2025-10-13**: Added duotone text formatting, layer ordering, and content management
+  - Programmatic character counting for mixed-color text
+  - Figma's inverted layer stack explanation
+  - reorder-children command documentation
+  - Content checking workflow
+  - Bullet title length guidelines
 
 - **2025-10-12**: Initial context documentation
   - Text sizing discoveries

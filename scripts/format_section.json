@@ -1,0 +1,26 @@
+{
+  "commands": [
+    {
+      "type": "update-node",
+      "payload": {
+        "nodeId": "I1:1231;2505:10064",
+        "characterFormatting": [
+          {
+            "start": 0,
+            "end": 34,
+            "fills": [{"type": "SOLID", "color": {"r": 0.105, "g": 0.105, "b": 0.105}, "opacity": 1}],
+            "fontSize": 38,
+            "fontName": {"family": "Biennale", "style": "SemiBold"}
+          },
+          {
+            "start": 34,
+            "end": 129,
+            "fills": [{"type": "SOLID", "color": {"r": 0.46, "g": 0.46, "b": 0.46}, "opacity": 1}],
+            "fontSize": 38,
+            "fontName": {"family": "Biennale", "style": "SemiBold"}
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -125,27 +125,60 @@ export async function handleSyncInstance(msg: Command): Promise<CommandResponse>
 // 3. read-components: Read all local components
 export async function handleReadComponents(msg: Command): Promise<CommandResponse> {
   try {
+    const { responseMode = 'full' } = msg.payload || {};
     const components = figma.currentPage.findAll((n) => n.type === 'COMPONENT') as ComponentNode[];
 
-    const serialized = components.map((comp) => ({
-      id: comp.id,
-      key: comp.key,
-      name: comp.name,
-      description: comp.description,
-      x: comp.x,
-      y: comp.y,
-      width: comp.width,
-      height: comp.height,
-      fills: [...(comp.fills as Paint[])],
-      strokes: [...(comp.strokes as Paint[])],
-      cornerRadius: comp.cornerRadius,
-      layoutMode: comp.layoutMode
-    }));
+    let data: any;
+
+    switch (responseMode) {
+      case 'ids-only':
+        data = {
+          ids: components.map(c => c.id),
+          keys: components.map(c => c.key),
+          count: components.length
+        };
+        break;
+
+      case 'minimal':
+        data = {
+          components: components.map(c => ({
+            id: c.id,
+            key: c.key,
+            name: c.name,
+            type: c.type,
+            width: c.width,
+            height: c.height
+          })),
+          count: components.length
+        };
+        break;
+
+      case 'full':
+      default:
+        data = {
+          components: components.map((comp) => ({
+            id: comp.id,
+            key: comp.key,
+            name: comp.name,
+            description: comp.description,
+            x: comp.x,
+            y: comp.y,
+            width: comp.width,
+            height: comp.height,
+            fills: [...(comp.fills as Paint[])],
+            strokes: [...(comp.strokes as Paint[])],
+            cornerRadius: comp.cornerRadius,
+            layoutMode: comp.layoutMode
+          })),
+          count: components.length
+        };
+        break;
+    }
 
     return {
       id: msg.id,
       success: true,
-      data: { components: serialized, count: serialized.length }
+      data
     };
   } catch (error) {
     return { id: msg.id, success: false, error: String(error) };

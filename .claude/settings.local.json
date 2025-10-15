@@ -9,7 +9,13 @@
       "Bash(findstr:*)",
       "Bash(git init:*)",
       "Bash(cat:*)",
-      "Read(//c/Users/dmold/.claude/**)"
+      "Read(//c/Users/dmold/.claude/**)",
+      "Bash(dir:*)",
+      "Read(//f/**)",
+      "Bash(paste - - -)",
+      "Bash(paste -:*)",
+      "Bash(echo:*)",
+      "Bash(del replace-colors.js)"
     ],
     "deny": [],
     "ask": []
