@@ -1,4 +1,15 @@
-import { Command, CommandResponse } from '../../shared/types';
+interface Command {
+  id: string;
+  type: string;
+  payload: any;
+}
+
+interface CommandResponse {
+  id: string;
+  success: boolean;
+  data?: any;
+  error?: string;
+}
 
 interface PendingCommand {
   command: Command;

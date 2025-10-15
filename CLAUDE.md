@@ -95,6 +95,13 @@ External Tools → HTTP API → Bridge Server → WebSocket → Figma Plugin
   - `sync-component` - Create/update components
   - `sync-instance` - Create component instances
   - `read-components` - Read all local components
+  - `create-from-svg` - Create node from SVG string
+  - `create-component-set` - Create component set with variants from SVG icons
+  - `add-component-property` - Add variant property to component
+  - `convert-to-component` - Convert any node to component
+  - `add-variants-to-set` - Add placeholder variants to existing component set
+  - `rename-component-property` - Rename variant property in component set
+  - `replace-component-content` - Replace component children with SVG content
 
 - **Pages**
   - `sync-page` - Create/update pages
@@ -476,6 +483,272 @@ curl -X POST http://localhost:3001/api/replace-colors-batch \
 - "Find" command returns data for processing/preview
 - "Replace" command executes the actual changes
 - Allows for validation and adjustment before applying changes
+
+## SVG Import and Icon Component Workflow
+
+### Creating Nodes from SVG
+
+**create-from-svg** - Import SVG string as Figma node
+
+Creates a node from an SVG string using Figma's native SVG import.
+
+```bash
+curl -X POST http://localhost:3001/api/create-from-svg \
+  -H "Content-Type: application/json" \
+  -d '{
+    "svg": "<svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\"><path d=\"M12 2L2 7l10 5 10-5-10-5z\"/></svg>",
+    "name": "Icon Name",
+    "x": 0,
+    "y": 0,
+    "parent": "123:456"
+  }'
+```
+
+Parameters:
+- `svg` (required): SVG string content
+- `name` (optional): Name for the created node
+- `x`, `y` (optional): Position
+- `parent` (optional): Parent node ID
+
+### Creating Component Sets with Variants
+
+**create-component-set** - Create component set from multiple SVG icons
+
+Creates multiple components from SVG strings and combines them into a component set with variant properties.
+
+```bash
+curl -X POST http://localhost:3001/api/create-component-set \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Icons",
+    "x": 0,
+    "y": 0,
+    "variants": [
+      {
+        "name": "home",
+        "svg": "<svg>...</svg>",
+        "properties": {"icon": "home", "size": "24"}
+      },
+      {
+        "name": "settings",
+        "svg": "<svg>...</svg>",
+        "properties": {"icon": "settings", "size": "24"}
+      }
+    ]
+  }'
+```
+
+Parameters:
+- `name` (optional): Name for component set
+- `x`, `y` (optional): Position
+- `variants` (required): Array of variant objects
+  - `name`: Component variant name
+  - `svg`: SVG string content
+  - `properties`: Variant property key-value pairs
+
+### Loading Icons from Local Directory
+
+**load-icons** - Read SVG files from local directory
+
+Reads all SVG files from a local directory and returns their content. Does not create anything in Figma.
+
+```bash
+curl -X POST http://localhost:3001/api/load-icons \
+  -H "Content-Type: application/json" \
+  -d '{
+    "directory": "./icons",
+    "pattern": "\\.svg$"
+  }'
+```
+
+Parameters:
+- `directory` (required): Path to directory containing SVG files
+- `pattern` (optional): Regex pattern to filter files (default: `\.svg$`)
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "directory": "/absolute/path/to/icons",
+    "count": 15,
+    "icons": [
+      {
+        "name": "home",
+        "fileName": "home.svg",
+        "svg": "<svg>...</svg>",
+        "path": "/absolute/path/to/icons/home.svg"
+      }
+    ]
+  }
+}
+```
+
+### Importing Icons as Component Set (One-Step)
+
+**import-icons-as-components** - Load local SVG files and create component set
+
+Combines `load-icons` and `create-component-set` into a single operation. Reads SVG files from directory and creates a component set in Figma.
+
+```bash
+curl -X POST http://localhost:3001/api/import-icons-as-components \
+  -H "Content-Type: application/json" \
+  -d '{
+    "directory": "./icons",
+    "pattern": "\\.svg$",
+    "componentSetName": "My Icons",
+    "x": 0,
+    "y": 0,
+    "properties": {"size": "24"}
+  }'
+```
+
+Parameters:
+- `directory` (required): Path to directory containing SVG files
+- `pattern` (optional): Regex pattern to filter files
+- `componentSetName` (optional): Name for component set (default: "Icons")
+- `x`, `y` (optional): Position
+- `properties` (optional): Variant properties to apply to all icons
+
+### Additional Component Commands
+
+**add-component-property** - Add variant property to existing component
+
+```bash
+curl -X POST http://localhost:3001/api/add-component-property \
+  -H "Content-Type: application/json" \
+  -d '{
+    "componentId": "123:456",
+    "propertyName": "size",
+    "propertyType": "VARIANT",
+    "defaultValue": "24"
+  }'
+```
+
+**convert-to-component** - Convert any node to component
+
+```bash
+curl -X POST http://localhost:3001/api/convert-to-component \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nodeId": "123:456",
+    "name": "My Component"
+  }'
+```
+
+### Batch Icon Replacement
+
+**batch-replace-icons** - Replace multiple component contents with local SVG files
+
+Combines file reading, SVG resizing, component renaming, and content replacement into a single batch operation. Perfect for updating icon component sets.
+
+```bash
+curl -X POST http://localhost:3001/api/batch-replace-icons \
+  -H "Content-Type: application/json" \
+  -d '{
+    "icons": [
+      {
+        "id": "2639:3632",
+        "iconName": "chart-bar",
+        "variantName": "Group=Marketing, icon=Live Polls"
+      },
+      {
+        "id": "2639:3635",
+        "iconName": "confetti",
+        "variantName": "Group=Marketing, icon=Team Celebrations"
+      }
+    ],
+    "iconDirectory": "./phosphor-raw/raw/regular",
+    "targetSize": 40
+  }'
+```
+
+Parameters:
+- `icons` (required): Array of icon replacement objects
+  - `id`: Component node ID
+  - `iconName`: SVG filename without extension
+  - `variantName` (optional): New name for the component variant
+- `iconDirectory` (required): Path to directory containing SVG files
+- `targetSize` (optional): Target size in pixels (adds width/height to SVG tag)
+
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "total": 46,
+    "successful": 46,
+    "failed": 0,
+    "results": [
+      {
+        "id": "2639:3632",
+        "iconName": "chart-bar",
+        "variantName": "Group=Marketing, icon=Live Polls",
+        "success": true
+      }
+    ]
+  }
+}
+```
+
+**replace-component-content-from-file** - Replace single component content from local SVG file
+
+```bash
+curl -X POST http://localhost:3001/api/replace-component-content-from-file \
+  -H "Content-Type: application/json" \
+  -d '{
+    "componentId": "2639:3632",
+    "iconName": "chart-bar",
+    "iconDirectory": "./phosphor-raw/raw/regular",
+    "targetSize": 40,
+    "renameComponent": "Group=Marketing, icon=Live Polls"
+  }'
+```
+
+### Typical Icon Import Workflow
+
+1. Prepare SVG icons in a local directory
+2. Preview icons using `load-icons` endpoint
+3. Import all icons as component set using `import-icons-as-components`
+4. Component set is created with each icon as a variant
+5. Optionally add more properties with `add-component-property`
+
+### Key Implementation Details
+
+**SVG Import:**
+- Uses `figma.createNodeFromSvg()` for native SVG parsing
+- Returns a FrameNode containing the vector elements
+- Supports all standard SVG path syntax
+
+**SVG Sizing:**
+- Figma interprets SVG size from width/height attributes on the SVG tag
+- If missing, defaults to viewBox dimensions (e.g., 256x256 for Phosphor icons)
+- Bridge server automatically adds width/height attributes when targetSize is specified
+- Example: `<svg viewBox="0 0 256 256">` becomes `<svg viewBox="0 0 256 256" width="40" height="40">`
+
+**Stroke vs Fill Icons:**
+- **Filled icons**: Use `fill="currentColor"` with path data (Phosphor `/assets` folder)
+- **Stroke icons**: Use `stroke="currentColor"` and `stroke-width` attributes (Phosphor `/raw` folder)
+- Stroke-based icons are preferred for design systems as stroke width can be easily adjusted
+- Phosphor raw icons location: `phosphor-raw/raw/regular/*.svg`
+
+**Component Sets:**
+- Creates individual components first
+- Uses `figma.combineAsVariants()` to create component set
+- Automatically layouts variants horizontally with 100px spacing
+- Each variant can have custom properties
+
+**File System Access:**
+- Bridge server reads local files using Node.js `fs` module
+- Supports absolute and relative paths
+- Can filter files with regex patterns
+- Returns full SVG content for each file
+
+**Batch Operations:**
+- `batch-replace-icons` endpoint handles file reading, resizing, renaming, and replacing in one call
+- Eliminates need for separate Node.js scripts
+- Returns detailed success/failure status for each icon
+- All operations run sequentially to ensure proper command ordering
 
 ## Important Reminders
 

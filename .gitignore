@@ -30,3 +30,4 @@ plugin/*.js
 plugin/*.d.ts
 plugin/*.js.map
 !plugin/manifest.json
+bridge-server/phosphor-raw/

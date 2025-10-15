@@ -184,3 +184,380 @@ export async function handleReadComponents(msg: Command): Promise<CommandRespons
     return { id: msg.id, success: false, error: String(error) };
   }
 }
+
+// 4. create-from-svg: Create node from SVG string
+export async function handleCreateFromSvg(msg: Command): Promise<CommandResponse> {
+  try {
+    const { svg, name, x, y, parent } = msg.payload;
+
+    if (!svg) {
+      return { id: msg.id, success: false, error: 'SVG string is required' };
+    }
+
+    const node = figma.createNodeFromSvg(svg);
+
+    if (name) node.name = name;
+    if (x !== undefined) node.x = x;
+    if (y !== undefined) node.y = y;
+
+    if (parent) {
+      const parentNode = figma.getNodeById(parent);
+      if (parentNode && 'appendChild' in parentNode) {
+        (parentNode as FrameNode).appendChild(node);
+      }
+    } else {
+      figma.currentPage.appendChild(node);
+    }
+
+    return {
+      id: msg.id,
+      success: true,
+      data: {
+        nodeId: node.id,
+        name: node.name,
+        type: node.type,
+        width: node.width,
+        height: node.height
+      }
+    };
+  } catch (error) {
+    return { id: msg.id, success: false, error: String(error) };
+  }
+}
+
+// 5. create-component-set: Create component set with variants
+export async function handleCreateComponentSet(msg: Command): Promise<CommandResponse> {
+  try {
+    const { name, x, y, variants } = msg.payload;
+
+    if (!variants || !Array.isArray(variants) || variants.length === 0) {
+      return { id: msg.id, success: false, error: 'Variants array is required' };
+    }
+
+    const components: ComponentNode[] = [];
+    const spacing = 100;
+    let currentX = x || 0;
+    const currentY = y || 0;
+
+    for (const variant of variants) {
+      const { name: variantName, svg, properties } = variant;
+
+      let component: ComponentNode;
+
+      if (svg) {
+        const svgNode = figma.createNodeFromSvg(svg);
+        component = figma.createComponentFromNode(svgNode);
+        svgNode.remove();
+      } else {
+        component = figma.createComponent();
+        component.resize(24, 24);
+      }
+
+      component.name = variantName || 'Component';
+      component.x = currentX;
+      component.y = currentY;
+
+      if (properties) {
+        for (const [key, value] of Object.entries(properties)) {
+          try {
+            component.addComponentProperty(key, 'VARIANT', value as string);
+          } catch (e) {
+            console.error(`Failed to add property ${key}:`, e);
+          }
+        }
+      }
+
+      figma.currentPage.appendChild(component);
+      components.push(component);
+      currentX += component.width + spacing;
+    }
+
+    const componentSet = figma.combineAsVariants(components, figma.currentPage);
+
+    if (name) {
+      componentSet.name = name;
+    }
+
+    return {
+      id: msg.id,
+      success: true,
+      data: {
+        componentSetId: componentSet.id,
+        name: componentSet.name,
+        componentCount: components.length,
+        components: components.map(c => ({
+          id: c.id,
+          name: c.name,
+          key: c.key
+        }))
+      }
+    };
+  } catch (error) {
+    return { id: msg.id, success: false, error: String(error) };
+  }
+}
+
+// 6. add-component-property: Add property to component
+export async function handleAddComponentProperty(msg: Command): Promise<CommandResponse> {
+  try {
+    const { componentId, propertyName, propertyType, defaultValue, variantOptions } = msg.payload;
+
+    if (!componentId) {
+      return { id: msg.id, success: false, error: 'componentId is required' };
+    }
+
+    const node = figma.getNodeById(componentId);
+    if (!node || node.type !== 'COMPONENT') {
+      return { id: msg.id, success: false, error: 'Component not found' };
+    }
+
+    const component = node as ComponentNode;
+
+    component.addComponentProperty(propertyName, propertyType || 'VARIANT', defaultValue || '');
+
+    return {
+      id: msg.id,
+      success: true,
+      data: {
+        componentId: component.id,
+        propertyName,
+        properties: component.componentPropertyDefinitions
+      }
+    };
+  } catch (error) {
+    return { id: msg.id, success: false, error: String(error) };
+  }
+}
+
+// 7. convert-to-component: Convert node to component
+export async function handleConvertToComponent(msg: Command): Promise<CommandResponse> {
+  try {
+    const { nodeId, name } = msg.payload;
+
+    if (!nodeId) {
+      return { id: msg.id, success: false, error: 'nodeId is required' };
+    }
+
+    const node = figma.getNodeById(nodeId);
+    if (!node || !('type' in node)) {
+      return { id: msg.id, success: false, error: 'Node not found' };
+    }
+
+    const component = figma.createComponentFromNode(node as SceneNode);
+
+    if (name) {
+      component.name = name;
+    }
+
+    return {
+      id: msg.id,
+      success: true,
+      data: {
+        componentId: component.id,
+        name: component.name,
+        key: component.key,
+        type: component.type
+      }
+    };
+  } catch (error) {
+    return { id: msg.id, success: false, error: String(error) };
+  }
+}
+
+// 8. rename-component-property: Rename variant property in component set
+export async function handleRenameComponentProperty(msg: Command): Promise<CommandResponse> {
+  try {
+    const { componentSetId, oldName, newName } = msg.payload;
+
+    if (!componentSetId || !oldName || !newName) {
+      return { id: msg.id, success: false, error: 'componentSetId, oldName, and newName are required' };
+    }
+
+    const node = figma.getNodeById(componentSetId);
+    if (!node || node.type !== 'COMPONENT_SET') {
+      return { id: msg.id, success: false, error: 'Component set not found' };
+    }
+
+    const componentSet = node as ComponentSetNode;
+
+    const updatedPropertyName = componentSet.editComponentProperty(oldName, { name: newName });
+
+    return {
+      id: msg.id,
+      success: true,
+      data: {
+        componentSetId: componentSet.id,
+        oldPropertyName: oldName,
+        newPropertyName: updatedPropertyName
+      }
+    };
+  } catch (error) {
+    return { id: msg.id, success: false, error: String(error) };
+  }
+}
+
+// 9. add-variants-to-set: Add placeholder variants to existing component set
+export async function handleAddVariantsToSet(msg: Command): Promise<CommandResponse> {
+  try {
+    const { componentSetId, count, variantNames } = msg.payload;
+
+    if (!componentSetId) {
+      return { id: msg.id, success: false, error: 'componentSetId is required' };
+    }
+
+    const node = figma.getNodeById(componentSetId);
+    if (!node || node.type !== 'COMPONENT_SET') {
+      return { id: msg.id, success: false, error: 'Component set not found' };
+    }
+
+    const componentSet = node as ComponentSetNode;
+
+    if (componentSet.children.length === 0) {
+      return { id: msg.id, success: false, error: 'Component set has no children to clone' };
+    }
+
+    const variantCount = count || 5;
+    const baseComponent = componentSet.children[0] as ComponentNode;
+    const newComponents: ComponentNode[] = [];
+
+    for (let i = 0; i < variantCount; i++) {
+      const clonedComponent = baseComponent.clone();
+
+      if (variantNames && variantNames[i]) {
+        clonedComponent.name = variantNames[i];
+      } else {
+        clonedComponent.name = `Variant${componentSet.children.length + i + 1}`;
+      }
+
+      componentSet.appendChild(clonedComponent);
+      newComponents.push(clonedComponent);
+    }
+
+    return {
+      id: msg.id,
+      success: true,
+      data: {
+        componentSetId: componentSet.id,
+        componentSetName: componentSet.name,
+        addedCount: newComponents.length,
+        totalVariants: componentSet.children.length,
+        newVariants: newComponents.map(c => ({
+          id: c.id,
+          name: c.name,
+          key: c.key
+        }))
+      }
+    };
+  } catch (error) {
+    return { id: msg.id, success: false, error: String(error) };
+  }
+}
+
+// 10. replace-component-content: Replace component children with SVG
+export async function handleReplaceComponentContent(msg: Command): Promise<CommandResponse> {
+  try {
+    const { componentId, svg, targetSize, convertToStroke, strokeWidth } = msg.payload;
+
+    if (!componentId || !svg) {
+      return { id: msg.id, success: false, error: 'componentId and svg are required' };
+    }
+
+    const node = figma.getNodeById(componentId);
+    if (!node || node.type !== 'COMPONENT') {
+      return { id: msg.id, success: false, error: 'Component not found' };
+    }
+
+    const component = node as ComponentNode;
+    const size = targetSize || 40;
+
+    const svgNode = figma.createNodeFromSvg(svg);
+
+    const originalWidth = svgNode.width;
+    const originalHeight = svgNode.height;
+    const scale = Math.min(size / originalWidth, size / originalHeight);
+
+    svgNode.resize(originalWidth * scale, originalHeight * scale);
+
+    svgNode.x = (size - svgNode.width) / 2;
+    svgNode.y = (size - svgNode.height) / 2;
+
+    function convertNodeToStroke(node: SceneNode, width: number) {
+      if (node.type === 'VECTOR' || node.type === 'RECTANGLE' || node.type === 'ELLIPSE' || node.type === 'POLYGON' || node.type === 'STAR' || node.type === 'LINE') {
+        node.fills = [];
+        node.strokes = [{ type: 'SOLID', color: { r: 0, g: 0, b: 0 } }];
+        node.strokeWeight = width;
+        node.strokeAlign = 'CENTER';
+      }
+      if ('children' in node) {
+        for (const child of node.children) {
+          convertNodeToStroke(child, width);
+        }
+      }
+    }
+
+    if (convertToStroke) {
+      const width = strokeWidth || 1.5;
+      convertNodeToStroke(svgNode, width);
+    }
+
+    if (component.children.length > 0) {
+      const firstChild = component.children[0];
+      if (firstChild.type === 'FRAME' || firstChild.type === 'COMPONENT') {
+        while (firstChild.children.length > 0) {
+          firstChild.children[0].remove();
+        }
+
+        for (const child of svgNode.children) {
+          const clonedChild = child.clone();
+          firstChild.appendChild(clonedChild);
+        }
+
+        svgNode.remove();
+
+        return {
+          id: msg.id,
+          success: true,
+          data: {
+            componentId: component.id,
+            name: component.name,
+            wrapperId: firstChild.id,
+            childCount: firstChild.children.length
+          }
+        };
+      }
+    }
+
+    while (component.children.length > 0) {
+      component.children[0].remove();
+    }
+
+    const wrapper = figma.createFrame();
+    wrapper.name = 'icon-wrapper';
+    wrapper.resize(size, size);
+    wrapper.fills = [];
+    wrapper.clipsContent = false;
+
+    for (const child of svgNode.children) {
+      const clonedChild = child.clone();
+      wrapper.appendChild(clonedChild);
+    }
+
+    component.appendChild(wrapper);
+    svgNode.remove();
+
+    component.resize(size, size);
+
+    return {
+      id: msg.id,
+      success: true,
+      data: {
+        componentId: component.id,
+        name: component.name,
+        wrapperId: wrapper.id,
+        childCount: wrapper.children.length
+      }
+    };
+  } catch (error) {
+    return { id: msg.id, success: false, error: String(error) };
+  }
+}

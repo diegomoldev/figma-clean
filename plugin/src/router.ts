@@ -29,7 +29,14 @@ import {
 import {
   handleSyncComponent,
   handleSyncInstance,
-  handleReadComponents
+  handleReadComponents,
+  handleCreateFromSvg,
+  handleCreateComponentSet,
+  handleAddComponentProperty,
+  handleConvertToComponent,
+  handleAddVariantsToSet,
+  handleRenameComponentProperty,
+  handleReplaceComponentContent
 } from './handlers/components';
 import {
   handleCreatePageStructure,
@@ -134,6 +141,20 @@ export async function routeCommand(msg: Command): Promise<CommandResponse> {
       return await handleReplaceColorsBatch(msg);
     case 'replace-all-colors-global':
       return await handleReplaceAllColors(msg);
+    case 'create-from-svg':
+      return await handleCreateFromSvg(msg);
+    case 'create-component-set':
+      return await handleCreateComponentSet(msg);
+    case 'add-component-property':
+      return await handleAddComponentProperty(msg);
+    case 'convert-to-component':
+      return await handleConvertToComponent(msg);
+    case 'add-variants-to-set':
+      return await handleAddVariantsToSet(msg);
+    case 'rename-component-property':
+      return await handleRenameComponentProperty(msg);
+    case 'replace-component-content':
+      return await handleReplaceComponentContent(msg);
     default:
       return {
         id: msg.id,

@@ -46,7 +46,14 @@ export type CommandType =
   | 'read-text-content'
   | 'find-all-colors'
   | 'replace-colors-batch'
-  | 'replace-all-colors-global';
+  | 'replace-all-colors-global'
+  | 'create-from-svg'
+  | 'create-component-set'
+  | 'add-component-property'
+  | 'convert-to-component'
+  | 'add-variants-to-set'
+  | 'rename-component-property'
+  | 'replace-component-content';
 
 export type ResponseMode = 'full' | 'ids-only' | 'minimal' | 'hierarchy';
 
